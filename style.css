@@ -19,7 +19,6 @@ nav {
     justify-content: space-between;
     align-items: center;
     padding: 25px 5%;
-    border-bottom: 1px solid #eee;
 }
 .nav-logo { height: 45px; }
 .nav-links a {
@@ -31,60 +30,62 @@ nav {
     text-transform: uppercase;
 }
 
-/* HERO - RESEDA STYLE */
+/* HERO SECTION - REBALANCED */
 .hero {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Balanced 50/50 split */
+    grid-template-columns: 1.3fr 0.7fr; /* Typography gets more space */
     padding: 80px 5% 120px;
-    gap: 60px;
+    gap: 40px;
     align-items: center;
 }
 
 .brand-container {
     display: inline-block;
     width: 100%;
-    max-width: 800px;
+    max-width: 900px;
 }
 
 .brand-range {
-    font-size: clamp(5rem, 12vw, 11rem);
+    font-size: 13rem; /* Massive scale restored */
     font-weight: 900;
     line-height: 0.8;
     margin: 0;
-    letter-spacing: -6px;
+    letter-spacing: -7px;
+    text-transform: uppercase;
 }
 
 .brand-subtext {
     display: flex;
-    justify-content: space-between; /* Stretches text from R to E */
+    justify-content: space-between; /* Perfect R to E stretch */
     width: 100%;
     font-weight: 800;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     margin-top: 15px;
+    padding: 0 5px;
 }
 
 .hero-divider {
     border: none;
-    border-top: 3px solid var(--text);
-    width: 350px;
-    margin: 40px 0 20px 0;
+    border-top: 4px solid var(--text);
+    width: 380px;
+    margin: 45px 0 25px 0;
 }
 
 .hero-tagline {
-    font-size: 1.4rem;
-    max-width: 450px;
+    font-size: 1.5rem;
+    max-width: 480px;
     font-weight: 500;
     margin: 0;
 }
 
-/* IMAGE SCALING */
+/* IMAGE CONSTRAINTS */
 .hero-mosaic {
     width: 100%;
-    max-width: 550px;
+    max-width: 480px; /* Limits the mosaic size */
     height: auto;
     display: block;
-    margin-left: auto; /* Pushes image to the right */
-    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    margin-left: auto;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
 }
 
 /* BENTO GRID */
@@ -97,7 +98,7 @@ nav {
 }
 .card {
     background: white;
-    padding: 50px;
+    padding: 40px;
     border: 1px solid #eee;
 }
 .highlight { border-top: 5px solid var(--accent); }
@@ -109,3 +110,12 @@ footer {
     color: white;
 }
 .footer-grid { display: flex; justify-content: space-between; }
+
+/* MOBILE FIX: Ensure text doesn't break on phones */
+@media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; text-align: center; }
+    .brand-range { font-size: 6rem; letter-spacing: -2px; }
+    .brand-subtext { font-size: 1rem; }
+    .hero-divider { margin: 30px auto; }
+    .hero-mosaic { margin: 40px auto; }
+}
