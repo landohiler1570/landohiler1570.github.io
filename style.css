@@ -1,121 +1,38 @@
-:root {
-    --text: #1a1a1a;
-    --bg: #ffffff;
-    --accent: #008080;
-}
-
-body {
-    margin: 0;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: var(--text);
-    background-color: var(--bg);
-    line-height: 1.6;
-    overflow-x: hidden;
-}
-
-/* NAVIGATION */
-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 25px 5%;
-}
-.nav-logo { height: 45px; }
-.nav-links a {
-    margin-left: 25px;
-    text-decoration: none;
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-/* HERO SECTION - REBALANCED */
-.hero {
-    display: grid;
-    grid-template-columns: 1.3fr 0.7fr; /* Typography gets more space */
-    padding: 80px 5% 120px;
-    gap: 40px;
-    align-items: center;
-}
-
-.brand-container {
-    display: inline-block;
-    width: 100%;
-    max-width: 900px;
-}
-
-.brand-range {
-    font-size: 13rem; /* Massive scale restored */
-    font-weight: 900;
-    line-height: 0.8;
-    margin: 0;
-    letter-spacing: -7px;
-    text-transform: uppercase;
-}
-
-.brand-subtext {
-    display: flex;
-    justify-content: space-between; /* Perfect R to E stretch */
-    width: 100%;
-    font-weight: 800;
-    font-size: 1.5rem;
-    margin-top: 15px;
-    padding: 0 5px;
-}
-
-.hero-divider {
-    border: none;
-    border-top: 4px solid var(--text);
-    width: 380px;
-    margin: 45px 0 25px 0;
-}
-
-.hero-tagline {
-    font-size: 1.5rem;
-    max-width: 480px;
-    font-weight: 500;
-    margin: 0;
-}
-
-/* IMAGE CONSTRAINTS */
-.hero-mosaic {
-    width: 100%;
-    max-width: 480px; /* Limits the mosaic size */
-    height: auto;
-    display: block;
-    margin-left: auto;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-}
-
-/* BENTO GRID */
-.bento-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 25px;
-    padding: 80px 5%;
-    background-color: #fafafa;
-}
-.card {
-    background: white;
+/* Layout for the Services Page */
+.content-container {
     padding: 40px;
-    border: 1px solid #eee;
+    max-width: 1000px;
 }
-.highlight { border-top: 5px solid var(--accent); }
 
-/* FOOTER */
-footer {
-    padding: 60px 5%;
-    background: #111;
-    color: white;
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
 }
-.footer-grid { display: flex; justify-content: space-between; }
 
-/* MOBILE FIX: Ensure text doesn't break on phones */
-@media (max-width: 768px) {
-    .hero { grid-template-columns: 1fr; text-align: center; }
-    .brand-range { font-size: 6rem; letter-spacing: -2px; }
-    .brand-subtext { font-size: 1rem; }
-    .hero-divider { margin: 30px auto; }
-    .hero-mosaic { margin: 40px auto; }
+.service-card {
+    background: rgba(255, 255, 255, 0.05); /* Subtle dark-mode look */
+    border-left: 3px solid #00ffcc; /* Tech-green accent */
+    padding: 20px;
+    transition: transform 0.3s ease;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+}
+
+.service-card h3 {
+    margin-top: 0;
+    color: #00ffcc;
+}
+
+.engagement-models {
+    margin-top: 50px;
+    border-top: 1px solid #444;
+    padding-top: 20px;
+}
+
+.model-row {
+    margin-bottom: 15px;
 }
