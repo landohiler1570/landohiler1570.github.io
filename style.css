@@ -1,7 +1,7 @@
 :root {
     --text: #1a1a1a;
     --bg: #ffffff;
-    --accent: #008080;
+    --accent: #008080; /* Teal to match your logo */
 }
 
 body {
@@ -9,7 +9,8 @@ body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: var(--text);
     background-color: var(--bg);
-    line-height: 1.5;
+    line-height: 1.6;
+    overflow-x: hidden;
 }
 
 /* NAVIGATION */
@@ -17,32 +18,35 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 5%;
+    padding: 25px 5%;
     border-bottom: 1px solid #eee;
 }
-.nav-logo { height: 40px; }
+.nav-logo { height: 45px; }
 .nav-links a {
     margin-left: 25px;
     text-decoration: none;
     color: var(--text);
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-/* HERO - THE JUSTIFIED STRETCH */
+/* HERO SECTION */
 .hero {
     display: grid;
     grid-template-columns: 1.2fr 0.8fr;
-    padding: 100px 5%;
-    gap: 40px;
+    padding: 100px 5% 140px;
+    gap: 60px;
     align-items: center;
 }
+
 .brand-container {
     display: inline-block;
     width: 100%;
-    max-width: 800px;
+    max-width: 850px;
 }
+
 .brand-range {
     font-size: 11rem;
     font-weight: 900;
@@ -50,45 +54,62 @@ nav {
     margin: 0;
     letter-spacing: -6px;
 }
+
 .brand-subtext {
     display: flex;
-    justify-content: space-between; /* This creates the stretch from your drawing */
+    justify-content: space-between; /* Stretches D to C as per your drawing */
     width: 100%;
-    font-weight: 700;
-    font-size: 1.4rem;
-    margin-top: 10px;
+    font-weight: 800;
+    font-size: 1.3rem;
+    margin-top: 15px;
     padding: 0 5px;
 }
+
 .hero-tagline {
-    margin-top: 50px;
-    font-size: 1.3rem;
-    border-top: 3px solid var(--text);
-    padding-top: 25px;
+    margin-top: 60px;
+    font-size: 1.4rem;
+    border-top: 4px solid var(--text);
+    padding-top: 30px;
     max-width: 450px;
+    font-weight: 500;
+}
+
+/* SPINNING ANIMATION */
+.spinning-logo {
+    width: 100%;
+    max-width: 450px;
+    height: auto;
+    animation: slowSpin 20s linear infinite; /* Smooth slow rotation */
+    filter: drop-shadow(0 0 20px rgba(0, 128, 128, 0.15));
+}
+
+@keyframes slowSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* BENTO GRID */
 .bento-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    padding: 60px 5%;
-    background-color: #fcfcfc;
+    gap: 25px;
+    padding: 80px 5%;
+    background-color: #fafafa;
 }
 .card {
     background: white;
     padding: 50px;
     border: 1px solid #eee;
+    transition: 0.3s ease;
 }
-.highlight { border: 2px solid var(--accent); }
+.card:hover { border-color: var(--text); }
+.highlight { border-top: 5px solid var(--accent); }
 
-/* FOOTER */
+/* ABOUT & FOOTER */
+#about { padding: 120px 5%; max-width: 800px; }
 footer {
     padding: 80px 5%;
     background: #111;
     color: white;
 }
-.footer-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-}
+.footer-grid { display: grid; grid-template-columns: 1fr 1fr; }
