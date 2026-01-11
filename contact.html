@@ -1,1 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | Range Data Services</title>
+    <link rel="stylesheet" href="contact.css">
+</head>
+<body>
 
+    <nav class="main-nav">
+        <a href="index.html"><img src="logo.png" alt="Range Logo" class="nav-logo"></a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="services.html">Services</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </div>
+    </nav>
+
+    <main class="contact-wrapper">
+        <h1 class="page-title">Initiate Discovery</h1>
+        <div class="underline-thick"></div>
+
+        <div class="contact-grid">
+            <form action="https://formspree.io/f/xvzzoplp" method="POST" class="contact-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" required placeholder="Lando Hiler">
+                </div>
+                <div class="form-group">
+                    <label>Professional Email</label>
+                    <input type="email" name="_replyto" required placeholder="name@firm.com">
+                </div>
+                <div class="form-group">
+                    <label>Discovery Requirements</label>
+                    <textarea name="message" rows="5" required placeholder="Describe the dataset or inquiry..."></textarea>
+                </div>
+                <input type="hidden" name="_subject" value="New Discovery Inquiry - Range Data Services">
+                <button type="submit" class="submit-btn">Send Message</button>
+            </form>
+
+            <div class="contact-info">
+                <h3>Direct Correspondence</h3>
+                <p>landohiler@rangedataservices.com</p>
+                
+                <h3>Headquarters</h3>
+                <p>217 N. K Ave<br>El Reno, OK 73036</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="global-footer">
+        <p>© 2026 Range Data Services, LLC.</p>
+    </footer>
+
+</body>
+</html>
