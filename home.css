@@ -17,15 +17,10 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 25px 5%;
-}
-.nav-logo { height: 45px; }
-.nav-links a {
-    margin-left: 20px;
-    text-decoration: none;
-    color: var(--text);
-    font-weight: 700;
-    font-size: 13px;
-    text-transform: uppercase;
+.nav-logo { 
+    height: 45px; /* Locks the height so it doesn't blow up */
+    width: auto;
+    display: block;
 }
 
 /* HERO GRID - RIGID SEPARATION */
