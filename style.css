@@ -1,7 +1,7 @@
 :root {
     --text: #1a1a1a;
     --bg: #ffffff;
-    --accent: #008080; /* Teal to match your logo */
+    --accent: #008080;
 }
 
 body {
@@ -29,64 +29,64 @@ nav {
     font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
+/* HERO - RESEDA STYLE */
 .hero {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Equal split for better balance */
-    padding: 80px 5%;
-    gap: 80px;
+    grid-template-columns: 1fr 1fr; /* Balanced 50/50 split */
+    padding: 80px 5% 120px;
+    gap: 60px;
     align-items: center;
 }
 
-.hero-mosaic {
+.brand-container {
+    display: inline-block;
     width: 100%;
-    max-width: 550px; /* Constrains the image size */
-    height: auto;
-    border-radius: 4px; /* Optional: adds a sharp professional edge */
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    max-width: 800px;
 }
 
-.hero-divider {
-    border: none;
-    border-top: 2px solid #1a1a1a;
-    width: 350px; /* Matches your manual drawing's line length */
-    margin: 40px 0 20px 0;
+.brand-range {
+    font-size: clamp(5rem, 12vw, 11rem);
+    font-weight: 900;
+    line-height: 0.8;
+    margin: 0;
+    letter-spacing: -6px;
 }
 
 .brand-subtext {
     display: flex;
-    justify-content: space-between; /* Perfect horizontal stretch */
+    justify-content: space-between; /* Stretches text from R to E */
     width: 100%;
     font-weight: 800;
-    font-size: 1.4rem;
-    margin-top: 10px;
+    font-size: 1.3rem;
+    margin-top: 15px;
 }
+
+.hero-divider {
+    border: none;
+    border-top: 3px solid var(--text);
+    width: 350px;
+    margin: 40px 0 20px 0;
+}
+
 .hero-tagline {
-    margin-top: 60px;
     font-size: 1.4rem;
-    border-top: 4px solid var(--text);
-    padding-top: 30px;
     max-width: 450px;
     font-weight: 500;
+    margin: 0;
 }
 
-/* SPINNING ANIMATION */
-..spinning-logo {
+/* IMAGE SCALING */
+.hero-mosaic {
     width: 100%;
-    max-width: 500px; /* Made slightly larger for the high-res file */
+    max-width: 550px;
     height: auto;
     display: block;
-    margin: 0 auto;
-    animation: slowSpin 25s linear infinite; /* Slightly slower for a more 'luxury' feel */
-    filter: drop-shadow(0 0 30px rgba(0, 128, 128, 0.1)); /* Soft glow */
+    margin-left: auto; /* Pushes image to the right */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
 }
 
-@keyframes slowSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
 /* BENTO GRID */
 .bento-grid {
     display: grid;
@@ -99,16 +99,13 @@ nav {
     background: white;
     padding: 50px;
     border: 1px solid #eee;
-    transition: 0.3s ease;
 }
-.card:hover { border-color: var(--text); }
 .highlight { border-top: 5px solid var(--accent); }
 
-/* ABOUT & FOOTER */
-#about { padding: 120px 5%; max-width: 800px; }
+/* FOOTER */
 footer {
-    padding: 80px 5%;
+    padding: 60px 5%;
     background: #111;
     color: white;
 }
-.footer-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.footer-grid { display: flex; justify-content: space-between; }
