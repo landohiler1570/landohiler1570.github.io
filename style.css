@@ -1,70 +1,92 @@
 :root {
-    --bg-color: #0B0F19;
-    --card-bg: #161B22;
-    --text-primary: #F0F6FC;
-    --accent: #10B981; /* Emerald Green */
-    --nav-bg: rgba(11, 15, 25, 0.8);
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --accent: #008080; /* Teal accent to match your logo */
 }
 
 body {
     margin: 0;
-    font-family: 'Inter', -apple-system, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-primary);
-    line-height: 1.6;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    background-color: var(--bg);
 }
 
 nav {
     display: flex;
     justify-content: space-between;
-    padding: 1.5rem 5%;
-    background: var(--nav-bg);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    align-items: center;
+    padding: 30px 5%;
 }
 
+.nav-logo { height: 45px; }
+
+.nav-links a {
+    margin-left: 30px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+/* HERO SECTION - RESEDA STYLE */
 .hero {
-    padding: 10rem 10% 5rem;
-    text-align: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 60px 5% 120px;
+    align-items: center;
 }
 
-h1 {
-    font-size: 3.5rem;
-    max-width: 900px;
-    margin: 0 auto 1.5rem;
+.brand-range {
+    font-size: 10rem;
+    font-weight: 900;
+    margin: 0;
+    line-height: 0.85;
+    letter-spacing: -4px;
 }
 
+.brand-data-services {
+    display: flex;
+    justify-content: space-between; /* This stretches the words across the width */
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 5px;
+    width: 100%;
+    max-width: 630px; /* Adjust this to perfectly match the 'RANGE' width */
+}
+
+.tagline {
+    margin-top: 40px;
+    font-size: 1.2rem;
+    border-top: 2px solid var(--text);
+    padding-top: 20px;
+    max-width: 400px;
+}
+
+.hero-image img {
+    width: 100%;
+    border-radius: 4px;
+}
+
+/* BENTO GRID */
 .bento-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    padding: 5rem 10%;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 40px 5%;
+    background-color: #f9f9f9;
 }
 
 .card {
-    background: var(--card-bg);
-    padding: 2rem;
-    border-radius: 12px;
-    border: 1px solid #30363D;
-    transition: 0.3s;
+    background: white;
+    padding: 40px;
+    border: 1px solid #eee;
 }
-
-.card:hover { border-color: var(--accent); }
 
 .highlight { border: 2px solid var(--accent); }
 
-footer {
-    padding: 5rem 10%;
-    background: #010409;
-    text-align: center;
-}
-
-.cta-button {
-    background: var(--accent);
-    color: white;
-    padding: 1rem 2rem;
-    text-decoration: none;
-    border-radius: 5px;
-    font-weight: bold;
-}
+/* ABOUT & FOOTER */
+#about { padding: 100px 5%; }
+#contact { padding: 60px 5%; background: #111; color: white; }
+.contact-grid { display: grid; grid-template-columns: 1fr 1fr; }
