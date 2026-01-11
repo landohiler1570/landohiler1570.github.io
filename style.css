@@ -1,1 +1,70 @@
+:root {
+    --bg-color: #0B0F19;
+    --card-bg: #161B22;
+    --text-primary: #F0F6FC;
+    --accent: #10B981; /* Emerald Green */
+    --nav-bg: rgba(11, 15, 25, 0.8);
+}
 
+body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.5rem 5%;
+    background: var(--nav-bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.hero {
+    padding: 10rem 10% 5rem;
+    text-align: center;
+}
+
+h1 {
+    font-size: 3.5rem;
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+}
+
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 5rem 10%;
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid #30363D;
+    transition: 0.3s;
+}
+
+.card:hover { border-color: var(--accent); }
+
+.highlight { border: 2px solid var(--accent); }
+
+footer {
+    padding: 5rem 10%;
+    background: #010409;
+    text-align: center;
+}
+
+.cta-button {
+    background: var(--accent);
+    color: white;
+    padding: 1rem 2rem;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
