@@ -11,91 +11,81 @@ body {
     overflow-x: hidden;
 }
 
-/* NAVIGATION */
+/* NAV LOGO FIX (Crucial) */
+.nav-logo { 
+    height: 45px; 
+    width: auto; 
+}
+
 .main-nav {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     padding: 25px 5%;
-.nav-logo { 
-    height: 45px; /* Locks the height so it doesn't blow up */
-    width: auto;
-    display: block;
+    align-items: center;
 }
 
-/* HERO GRID - RIGID SEPARATION */
+.nav-links a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+/* HERO LAYOUT */
 .hero-grid {
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr; /* Prevents overlap */
-    padding: 60px 5% 100px;
+    grid-template-columns: 1.3fr 0.7fr;
+    padding: 60px 5%;
     align-items: center;
     max-width: 1400px;
     margin: 0 auto;
-    gap: 40px;
-}
-
-.hero-text-area {
-    z-index: 2;
+    gap: 50px;
 }
 
 .giant-range {
-    font-size: clamp(6rem, 13vw, 12rem);
+    font-size: clamp(6rem, 12vw, 12rem);
     font-weight: 900;
     line-height: 0.8;
     margin: 0;
-    letter-spacing: -7px;
+    letter-spacing: -6px;
 }
 
-.data-subtext {
+/* THE FIX FOR THE SUB-LINE */
+.sub-line-v2 {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* This creates the perfect alignment */
     width: 100%;
     font-weight: 800;
-    font-size: 1.5rem;
-    margin-top: 15px;
+    font-size: 1.4rem;
+    margin-top: 10px;
+    letter-spacing: normal; /* We let Flexbox handle spacing, not the font */
 }
 
-.hero-divider-bar {
+.hero-divider {
     height: 6px;
     background: var(--text);
     width: 380px;
-    margin: 45px 0 25px 0;
+    margin: 40px 0 20px 0;
 }
 
-.hero-tagline-statement {
-    font-size: 1.7rem;
+.tagline {
+    font-size: 1.6rem;
     font-weight: 500;
-    margin: 0;
 }
 
-/* IMAGE FIX */
-.hero-image-area {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.mosaic-hero-img {
+/* IMAGE CONSTRAINTS */
+.mosaic-img {
     width: 100%;
     max-width: 550px;
     height: auto;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.12);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.1);
 }
 
-/* FOOTER */
-.footer-bottom {
-    text-align: center;
-    padding: 60px;
-    color: #888;
-    font-size: 14px;
-}
-
-/* MOBILE RESPONSIVENESS */
-@media (max-width: 1100px) {
-    .hero-grid {
-        grid-template-columns: 1fr;
-        text-align: center;
-    }
-    .hero-divider-bar { margin: 35px auto; width: 250px; }
-    .hero-image-area { justify-content: center; margin-top: 40px; }
-    .giant-range { font-size: 7rem; letter-spacing: -3px; }
+/* MOBILE FIX */
+@media (max-width: 1024px) {
+    .hero-grid { grid-template-columns: 1fr; text-align: center; }
+    .hero-divider { margin: 30px auto; }
+    .sub-line-v2 { font-size: 1rem; }
 }
