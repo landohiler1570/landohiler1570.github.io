@@ -1,31 +1,70 @@
-:root { --text: #1a1a1a; --accent: #008080; }
-body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; color: var(--text); background: #fdfdfd; }
+:root {
+    --text: #1a1a1a;
+    --accent: #008080;
+}
 
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--text);
+    background: #fdfdfd;
+}
+
+/* Nav is the same across all pages */
+.main-nav { display: flex; justify-content: space-between; padding: 25px 5%; max-width: 1400px; margin: 0 auto; }
 .nav-logo { height: 45px !important; width: auto; }
-.main-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 5%; background: #fff; }
 .nav-links a { margin-left: 20px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 13px; text-transform: uppercase; }
 
-.page-container { padding: 80px 5%; text-align: center; }
-.page-title { font-size: 3rem; font-weight: 900; text-transform: uppercase; margin: 0; }
-.underline-thick { width: 80px; height: 8px; background: var(--text); margin: 20px auto 60px; }
-
-/* The 3-Box Grid */
-.services-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
-    gap: 30px; 
-    max-width: 1200px; 
-    margin: 0 auto; 
+/* THE STACKED LAYOUT */
+.services-wrapper {
+    max-width: 1200px;
+    margin: 80px auto;
+    padding: 0 10%; /* Creates that "off the edge" buffer you want */
 }
-.service-card { 
-    padding: 45px; 
-    border: 1px solid #eee; 
-    text-align: left; 
-    background: #fff; 
-    box-shadow: 0 5px 15px rgba(0,0,0,0.03); 
-    display: flex; 
-    flex-direction: column; 
-}
-.card-accent { width: 50px; height: 4px; background: var(--accent); margin-bottom: 25px; }
 
-.global-footer { text-align: center; padding: 60px; color: #888; font-size: 14px; }
+.page-title {
+    font-size: 3rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.title-underline {
+    width: 80px;
+    height: 8px;
+    background: var(--text);
+    margin-bottom: 60px;
+}
+
+/* BOX STYLING */
+.services-stack {
+    display: flex;
+    flex-direction: column; /* Stacks them vertically */
+    gap: 40px;
+    max-width: 700px; /* Keeps the boxes from stretching across the whole screen */
+}
+
+.service-card {
+    background: #fff;
+    padding: 50px;
+    border-left: 6px solid var(--accent); /* Accent on the left for vertical flow */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+
+.service-card:hover { transform: translateX(10px); }
+
+.service-card h2 {
+    font-size: 1.8rem;
+    margin-top: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.service-card p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #444;
+}
+
+.global-footer { text-align: center; padding: 100px 0; color: #888; font-size: 14px; }
