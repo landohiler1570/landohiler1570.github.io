@@ -12,7 +12,7 @@ body {
     line-height: 1.6;
 }
 
-/* NAV */
+/* NAVIGATION */
 .main-nav {
     display: flex;
     justify-content: space-between;
@@ -57,46 +57,78 @@ body {
 .hero-tagline { font-size: 1.5rem; font-weight: 500; }
 .mosaic-img { width: 100%; max-width: 500px; height: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
 
-/* SERVICES PAGE - CENTERED 3 BOXES */
+/* SERVICES PAGE LAYOUT */
 .centered-wrapper {
-    padding: 100px 8%;
+    padding: 80px 8%;
     max-width: 1400px;
     margin: 0 auto;
     text-align: center;
 }
 .services-heading {
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 900;
     text-transform: uppercase;
-    margin-bottom: 80px;
+    margin: 0;
 }
+.heading-underline {
+    width: 80px;
+    height: 8px;
+    background: var(--text);
+    margin: 20px auto 60px;
+}
+
+/* THE GRID SYSTEM */
 .services-grid {
     display: flex;
     justify-content: center;
-    gap: 40px;
-    flex-wrap: wrap; /* Stacks on mobile */
+    gap: 30px;
+    flex-wrap: wrap;
+    align-items: stretch; /* Forces equal heights */
 }
+
 .service-card {
     flex: 1;
-    min-width: 300px;
-    max-width: 380px;
-    padding: 40px;
+    min-width: 320px;
+    max-width: 400px;
+    padding: 50px 40px;
     background: #fff;
-    border: 1px solid #eee;
+    border: 1px solid #f0f0f0;
     text-align: left;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.03);
 }
+
+.service-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 128, 128, 0.1);
+    border-color: var(--accent);
+}
+
 .card-line {
-    width: 60px;
+    width: 50px;
     height: 4px;
-    background: var(--accent);
-    margin-bottom: 25px;
+    background: var(--accent); /* Matches your brand teal */
+    margin-bottom: 30px;
 }
+
 .service-card h3 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
+    font-weight: 800;
     margin-bottom: 20px;
-    line-height: 1.2;
+    min-height: 3.5rem; /* Forces consistent alignment */
+    display: flex;
+    align-items: center;
+    color: var(--text);
 }
 
 /* FOOTER */
-.footer-simple { text-align: center; padding: 60px; color: #888; font-size: 14px; }
+.footer-simple { text-align: center; padding: 80px 5%; color: #888; font-size: 14px; }
+
+/* MOBILE FIX */
+@media (max-width: 1024px) {
+    .brand-range { font-size: 6rem; letter-spacing: -2px; }
+    .hero { flex-direction: column; text-align: center; }
+    .hero-divider { margin: 30px auto; }
+}
