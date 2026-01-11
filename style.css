@@ -75,19 +75,20 @@ nav {
 }
 
 /* SPINNING ANIMATION */
-.spinning-logo {
+..spinning-logo {
     width: 100%;
-    max-width: 450px;
+    max-width: 500px; /* Made slightly larger for the high-res file */
     height: auto;
-    animation: slowSpin 20s linear infinite; /* Smooth slow rotation */
-    filter: drop-shadow(0 0 20px rgba(0, 128, 128, 0.15));
+    display: block;
+    margin: 0 auto;
+    animation: slowSpin 25s linear infinite; /* Slightly slower for a more 'luxury' feel */
+    filter: drop-shadow(0 0 30px rgba(0, 128, 128, 0.1)); /* Soft glow */
 }
 
 @keyframes slowSpin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
-
 /* BENTO GRID */
 .bento-grid {
     display: grid;
