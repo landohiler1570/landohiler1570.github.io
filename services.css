@@ -10,32 +10,53 @@ body {
     background: #fff;
 }
 
-/* Nav remains consistent */
-.main-nav { display: flex; justify-content: space-between; padding: 25px 5%; max-width: 1400px; margin: 0 auto; }
-.nav-logo { height: 45px !important; width: auto; }
-.nav-links a { margin-left: 20px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 13px; text-transform: uppercase; }
+/* --- NAVIGATION RESTORATION --- */
+.main-nav { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 25px 5%; 
+    max-width: 1400px; 
+    margin: 0 auto; 
+}
 
-/* THE STACKED CONTAINER */
-.services-container {
-    padding: 80px 50px 80px 150px; /* Top, Right, Bottom, Left (150px = ~1.5 inches) */
-    max-width: 1100px;
+.nav-logo { height: 45px !important; width: auto; }
+
+.nav-links {
+    display: flex;
+    gap: 25px;
+}
+
+.nav-links a { 
+    text-decoration: none; 
+    color: var(--text); 
+    font-weight: 700; 
+    font-size: 13px; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+}
+
+/* --- THE STACKED LAYOUT (1.5" / 150px OFFSET) --- */
+.services-wrapper {
+    padding: 80px 50px 80px 150px; /* 150px Left Padding for the 'Off-Edge' look */
+    max-width: 1200px;
 }
 
 .page-title {
     font-size: 3.5rem;
     font-weight: 900;
     text-transform: uppercase;
-    margin-bottom: 5px;
+    margin: 0 0 10px 0;
 }
 
-.underline {
+.underline-thick {
     width: 80px;
     height: 8px;
     background: var(--text);
     margin-bottom: 60px;
 }
 
-/* BOX STYLING - RECTANGULAR & STACKED */
+/* THE RECTANGULAR BOXES */
 .service-stack {
     display: flex;
     flex-direction: column;
@@ -45,10 +66,10 @@ body {
 .service-box {
     background: #fff;
     border: 1px solid #eee;
-    border-left: 8px solid var(--accent); /* Thick accent line for authority */
-    padding: 40px 60px;
-    max-width: 750px; /* Controls the rectangular width */
-    box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+    border-left: 8px solid var(--accent);
+    padding: 45px 60px;
+    max-width: 800px; /* Forces the rectangular shape */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
     transition: transform 0.3s ease;
 }
 
@@ -56,15 +77,15 @@ body {
 
 .service-box h2 {
     font-size: 1.6rem;
-    margin-top: 0;
+    margin: 0 0 15px 0;
     text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
 .service-box p {
     font-size: 1.1rem;
     line-height: 1.7;
     color: #444;
+    margin: 0;
 }
 
 .global-footer { text-align: center; padding: 100px 0; color: #888; font-size: 14px; }
