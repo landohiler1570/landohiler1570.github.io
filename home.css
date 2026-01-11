@@ -88,4 +88,19 @@ body {
     .hero-grid { grid-template-columns: 1fr; text-align: center; }
     .hero-divider { margin: 30px auto; }
     .sub-line-v2 { font-size: 1rem; }
+
+    /* Add this to home.css, about.css, and services.css */
+.nav-logo { 
+    height: 45px !important; /* Forces the height regardless of other rules */
+    width: auto; 
+    max-width: 200px;
+    display: block;
+}
+
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 5%;
+}
 }
