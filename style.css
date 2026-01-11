@@ -32,39 +32,37 @@ nav {
     letter-spacing: 1px;
 }
 
-/* HERO SECTION */
 .hero {
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    padding: 100px 5% 140px;
-    gap: 60px;
+    grid-template-columns: 1fr 1fr; /* Equal split for better balance */
+    padding: 80px 5%;
+    gap: 80px;
     align-items: center;
 }
 
-.brand-container {
-    display: inline-block;
+.hero-mosaic {
     width: 100%;
-    max-width: 850px;
+    max-width: 550px; /* Constrains the image size */
+    height: auto;
+    border-radius: 4px; /* Optional: adds a sharp professional edge */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
 }
 
-.brand-range {
-    font-size: 11rem;
-    font-weight: 900;
-    line-height: 0.8;
-    margin: 0;
-    letter-spacing: -6px;
+.hero-divider {
+    border: none;
+    border-top: 2px solid #1a1a1a;
+    width: 350px; /* Matches your manual drawing's line length */
+    margin: 40px 0 20px 0;
 }
 
 .brand-subtext {
     display: flex;
-    justify-content: space-between; /* Stretches D to C as per your drawing */
+    justify-content: space-between; /* Perfect horizontal stretch */
     width: 100%;
     font-weight: 800;
-    font-size: 1.3rem;
-    margin-top: 15px;
-    padding: 0 5px;
+    font-size: 1.4rem;
+    margin-top: 10px;
 }
-
 .hero-tagline {
     margin-top: 60px;
     font-size: 1.4rem;
