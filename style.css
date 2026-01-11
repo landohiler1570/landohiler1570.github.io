@@ -6,63 +6,64 @@
 
 body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; color: var(--text); background: var(--bg); line-height: 1.6; }
 
-/* NAV */
+/* UNIVERSAL NAV */
 .main-nav { display: flex; justify-content: space-between; align-items: center; padding: 25px 5%; }
 .nav-logo { height: 45px; }
 .nav-links a { margin-left: 20px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 13px; text-transform: uppercase; }
 
-/* --- HOME PAGE HERO (THE FIX) --- */
-.hero-container {
+/* --- HOME PAGE HERO (THE COLLISION FIX) --- */
+.home-hero {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 60px 5% 120px;
+    padding: 80px 5% 120px;
     gap: 60px;
-    max-width: 1400px;
+    max-width: 1500px;
     margin: 0 auto;
 }
 
-.hero-content { flex: 1.5; }
+.home-text-box { flex: 1.6; min-width: 600px; }
 
-.title-range {
-    font-size: clamp(5rem, 12vw, 12rem);
+.main-title {
+    font-size: clamp(6rem, 14vw, 13rem);
     font-weight: 900;
     line-height: 0.8;
     margin: 0;
-    letter-spacing: -6px;
+    letter-spacing: -8px;
 }
 
-.subtitle-stretch {
+.sub-line-stretch {
     display: flex;
     justify-content: space-between;
     width: 100%;
     font-weight: 800;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     margin-top: 15px;
 }
 
-.hero-hr { height: 6px; background: var(--text); width: 400px; margin: 45px 0 25px 0; }
-.hero-tag { font-size: 1.7rem; font-weight: 500; margin: 0; }
+.architect-line { height: 6px; background: var(--text); width: 400px; margin: 45px 0 25px 0; }
+.main-tagline { font-size: 1.8rem; font-weight: 500; margin: 0; }
 
-.hero-graphic { flex: 1; text-align: right; }
-.mosaic-graphic { width: 100%; max-width: 550px; height: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.12); }
+.home-image-box { flex: 1; display: flex; justify-content: flex-end; }
+.hero-mosaic { width: 100%; max-width: 550px; height: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.12); }
 
-/* --- ABOUT & SERVICES PAGE --- */
+/* --- ABOUT & SERVICES PAGE STABILITY --- */
 .about-wrapper, .centered-wrapper { padding: 80px 10%; max-width: 1200px; margin: 0 auto; }
 .about-header { text-align: center; margin-bottom: 60px; }
 .heading-underline { width: 80px; height: 8px; background: var(--text); margin: 20px auto; }
-
 .about-content { display: grid; grid-template-columns: 2fr 1fr; gap: 60px; text-align: left; }
 .lead-in { font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-bottom: 30px; }
 .credentials-sidebar { background: #f9f9f9; padding: 40px; border-top: 5px solid var(--text); }
 .credentials-sidebar li { padding: 10px 0; border-bottom: 1px solid #ddd; font-weight: 600; list-style: none; }
 
 /* FOOTER */
-.footer-global, .footer-simple { text-align: center; padding: 60px; color: #888; font-size: 14px; }
+.footer-master { text-align: center; padding: 60px; color: #888; font-size: 14px; }
 
 /* MOBILE */
 @media (max-width: 1024px) {
-    .hero-container { flex-direction: column; text-align: center; }
-    .hero-hr { margin: 30px auto; width: 250px; }
+    .home-hero { flex-direction: column; text-align: center; }
+    .home-text-box { min-width: auto; }
+    .main-title { font-size: 6rem; letter-spacing: -2px; }
+    .architect-line { margin: 30px auto; width: 250px; }
     .about-content { grid-template-columns: 1fr; }
 }
