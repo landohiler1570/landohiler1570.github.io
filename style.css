@@ -132,3 +132,65 @@ body {
     .hero { flex-direction: column; text-align: center; }
     .hero-divider { margin: 30px auto; }
 }
+/* ABOUT PAGE STYLES */
+.about-wrapper {
+    padding: 80px 10%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.about-header { text-align: center; }
+
+.about-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 60px;
+    margin-top: 60px;
+    text-align: left;
+}
+
+.lead-in {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--accent);
+    margin-bottom: 30px;
+}
+
+.bio-text p {
+    font-size: 1.15rem;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+.credentials-sidebar {
+    background: #f9f9f9;
+    padding: 40px;
+    border-top: 5px solid var(--text);
+    height: fit-content;
+}
+
+.credentials-sidebar h3 {
+    margin-top: 0;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+}
+
+.credentials-sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.credentials-sidebar li {
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* MOBILE FIX FOR ABOUT PAGE */
+@media (max-width: 900px) {
+    .about-content { grid-template-columns: 1fr; }
+}
