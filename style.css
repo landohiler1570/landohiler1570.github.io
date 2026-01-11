@@ -110,3 +110,27 @@ body {
     .hero-divider { margin: 30px auto; width: 200px; }
     .hero-visual { justify-content: center; }
 }
+/* Services Page Styles */
+.services-detail {
+    padding: 100px 5%;
+    max-width: 900px;
+}
+.page-title {
+    font-size: 4rem;
+    font-weight: 900;
+    margin-bottom: 50px;
+    border-bottom: 8px solid var(--text);
+    display: inline-block;
+}
+.service-item {
+    margin-bottom: 60px;
+}
+.service-item h2 {
+    font-size: 2rem;
+    color: var(--accent);
+    margin-bottom: 15px;
+}
+.service-item p {
+    font-size: 1.2rem;
+    color: #444;
+}
