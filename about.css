@@ -1,32 +1,128 @@
-:root { --text: #1a1a1a; --accent: #008080; }
-body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; color: var(--text); background: #fff; }
-
-/* Fixed Navigation Logo */
-.nav-logo { height: 45px !important; width: auto; }
-.main-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 5%; }
-.nav-links a { margin-left: 20px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 13px; text-transform: uppercase; }
-
-/* The Narrative Layout */
-.about-wrapper { 
-    padding: 80px 10%; 
-    display: grid; 
-    grid-template-columns: 2fr 1fr; 
-    gap: 60px; 
-    max-width: 1200px; 
-    margin: 0 auto; 
+:root {
+    --text: #1a1a1a;
+    --accent: #008080;
 }
 
-.about-header { text-align: center; grid-column: 1 / -1; margin-bottom: 50px; }
-.heading-underline { width: 80px; height: 8px; background: var(--text); margin: 20px auto; }
-
-.lead-in { font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-bottom: 30px; }
-
-.credentials-sidebar { 
-    background: #f9f9f9; 
-    padding: 40px; 
-    border-top: 5px solid var(--text); 
-    height: fit-content;
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--text);
+    background: #fff;
+    width: 100%;
 }
-.credentials-sidebar li { padding: 12px 0; border-bottom: 1px solid #ddd; list-style: none; font-weight: 600; }
 
-.global-footer { text-align: center; padding: 60px; color: #888; font-size: 14px; }
+/* NAVIGATION FIX */
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px 5%;
+    max-width: 1400px; /* Limits nav width on giant screens */
+    margin: 0 auto;
+}
+
+.nav-logo {
+    height: 45px !important;
+    width: auto;
+}
+
+.nav-links a {
+    margin-left: 25px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+/* THE ABOUT WRAPPER - THIS IS THE CORE FIX */
+.about-wrapper {
+    max-width: 1200px; /* Prevents it from getting too wide on large monitors */
+    margin: 80px auto; /* Centers the entire block on the screen */
+    padding: 0 5%;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr; /* Two columns: 60% text, 40% sidebar */
+    gap: 80px;
+    align-items: start;
+}
+
+/* HEADER FIX */
+.about-header {
+    grid-column: 1 / -1; /* Makes the title span across both columns */
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.about-header h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.heading-underline {
+    width: 100px;
+    height: 8px;
+    background: var(--text);
+    margin: 20px auto;
+}
+
+/* CONTENT BLOCKS */
+.lead-in {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--accent);
+    margin-bottom: 40px;
+}
+
+.bio-text p {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    margin-bottom: 30px;
+}
+
+/* SIDEBAR FIX */
+.credentials-sidebar {
+    background: #f9f9f9;
+    padding: 50px;
+    border-top: 6px solid var(--text);
+    height: auto;
+}
+
+.credentials-sidebar h3 {
+    margin-top: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 1rem;
+}
+
+.credentials-sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 30px;
+}
+
+.credentials-sidebar li {
+    padding: 15px 0;
+    border-bottom: 1px solid #ddd;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* FOOTER */
+.global-footer {
+    text-align: center;
+    padding: 100px 0 60px;
+    color: #888;
+    font-size: 14px;
+}
+
+/* MOBILE RESPONSIVENESS */
+@media (max-width: 900px) {
+    .about-wrapper {
+        grid-template-columns: 1fr; /* Stacks columns on smaller screens */
+        text-align: left;
+    }
+    .about-header h1 { font-size: 2.5rem; }
+}
