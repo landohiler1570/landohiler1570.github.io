@@ -1,72 +1,70 @@
 :root {
-    --bg: #ffffff;
     --text: #1a1a1a;
-    --accent: #008080; /* Teal accent to match your logo */
+    --bg: #ffffff;
+    --accent: #008080;
 }
 
 body {
     margin: 0;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: var(--text);
     background-color: var(--bg);
+    line-height: 1.5;
 }
 
+/* NAVIGATION */
 nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 30px 5%;
+    padding: 20px 5%;
+    border-bottom: 1px solid #eee;
 }
-
-.nav-logo { height: 45px; }
-
+.nav-logo { height: 40px; }
 .nav-links a {
-    margin-left: 30px;
+    margin-left: 25px;
     text-decoration: none;
     color: var(--text);
-    font-weight: 500;
-    text-transform: uppercase;
     font-size: 13px;
-    letter-spacing: 1px;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
-/* HERO SECTION - RESEDA STYLE */
+/* HERO - THE JUSTIFIED STRETCH */
 .hero {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 60px 5% 120px;
+    grid-template-columns: 1.2fr 0.8fr;
+    padding: 100px 5%;
+    gap: 40px;
     align-items: center;
 }
-
+.brand-container {
+    display: inline-block;
+    width: 100%;
+    max-width: 800px;
+}
 .brand-range {
-    font-size: 10rem;
+    font-size: 11rem;
     font-weight: 900;
+    line-height: 0.8;
     margin: 0;
-    line-height: 0.85;
-    letter-spacing: -4px;
+    letter-spacing: -6px;
 }
-
-.brand-data-services {
+.brand-subtext {
     display: flex;
-    justify-content: space-between; /* This stretches the words across the width */
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-top: 5px;
+    justify-content: space-between; /* This creates the stretch from your drawing */
     width: 100%;
-    max-width: 630px; /* Adjust this to perfectly match the 'RANGE' width */
+    font-weight: 700;
+    font-size: 1.4rem;
+    margin-top: 10px;
+    padding: 0 5px;
 }
-
-.tagline {
-    margin-top: 40px;
-    font-size: 1.2rem;
-    border-top: 2px solid var(--text);
-    padding-top: 20px;
-    max-width: 400px;
-}
-
-.hero-image img {
-    width: 100%;
-    border-radius: 4px;
+.hero-tagline {
+    margin-top: 50px;
+    font-size: 1.3rem;
+    border-top: 3px solid var(--text);
+    padding-top: 25px;
+    max-width: 450px;
 }
 
 /* BENTO GRID */
@@ -74,19 +72,23 @@ nav {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
-    padding: 40px 5%;
-    background-color: #f9f9f9;
+    padding: 60px 5%;
+    background-color: #fcfcfc;
 }
-
 .card {
     background: white;
-    padding: 40px;
+    padding: 50px;
     border: 1px solid #eee;
 }
-
 .highlight { border: 2px solid var(--accent); }
 
-/* ABOUT & FOOTER */
-#about { padding: 100px 5%; }
-#contact { padding: 60px 5%; background: #111; color: white; }
-.contact-grid { display: grid; grid-template-columns: 1fr 1fr; }
+/* FOOTER */
+footer {
+    padding: 80px 5%;
+    background: #111;
+    color: white;
+}
+.footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
