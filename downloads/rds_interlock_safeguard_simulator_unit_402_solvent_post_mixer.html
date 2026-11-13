@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RDS Interlock & Safeguard Simulator — Unit 402: Solvent Post-Mixer</title>
+  <style>
+    /* =========================================================================
+       1. DESIGN TOKENS & INDUSTRIAL SCADA THEME
+       ========================================================================= */
+    :root {
+      --bg-canvas: #0b1120;
+      --bg-panel: #131c31;
+      --bg-card: #1a253c;
+      --bg-elevated: #22304d;
+      --border-subtle: #2c3d5e;
+      --border-strong: #3e547d;
+
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+
+      --status-safe: #10b981;
+      --status-safe-glow: rgba(16, 185, 129, 0.35);
+      --status-safe-bg: rgba(16, 185, 129, 0.12);
+
+      --status-warn: #f59e0b;
+      --status-warn-glow: rgba(245, 158, 11, 0.35);
+      --status-warn-bg: rgba(245, 158, 11, 0.14);
+
+      --status-trip: #ef4444;
+      --status-trip-glow: rgba(239, 68, 68, 0.4);
+      --status-trip-bg: rgba(239, 68, 68, 0.14);
+
+      --accent-blue: #38bdf8;
+      --accent-indigo: #6366f1;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.45;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* =========================================================================
+       2. TOP SCADA HEADER BAR
+       ========================================================================= */
+    .scada-header {
+      background: linear-gradient(180deg, #162038 0%, #0f172a 100%);
+      border-bottom: 1px solid var(--border-strong);
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .rds-badge {
+      background: linear-gradient(135deg, #0284c7, #1d4ed8);
+      border: 1px solid #38bdf8;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+      white-space: nowrap;
+    }
+
+    .title-block h1 {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: var(--text-primary);
+    }
+
+    .title-block .subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .header-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .control-pill {
+      display: flex;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.25rem;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mode-btn.active {
+      background: var(--bg-elevated);
+      color: #fff;
+      box-shadow: inset 0 0 0 1px var(--accent-blue);
+    }
+
+    .scenario-select {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      max-width: 280px;
+    }
+
+    .scenario-select:focus {
+      border-color: var(--accent-blue);
+    }
+
+    .telemetry-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      background: #090e1a;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 0.4rem 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--status-safe);
+    }
+
+    .scan-led {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--status-safe);
+      box-shadow: 0 0 8px var(--status-safe);
+      transition: opacity 0.08s;
+    }
+
+    .telemetry-badge.alarm {
+      color: var(--status-trip);
+      border-color: var(--status-trip);
+    }
+
+    .telemetry-badge.alarm .scan-led {
+      background: var(--status-trip);
+      box-shadow: 0 0 8px var(--status-trip);
+    }
+
+    /* =========================================================================
+       3. HAZARD BANNER (CASCADING BYPASS WARNING)
+       ========================================================================= */
+    .hazard-banner {
+      display: none;
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(239, 68, 68, 0.22),
+        rgba(239, 68, 68, 0.22) 12px,
+        rgba(127, 29, 29, 0.35) 12px,
+        rgba(127, 29, 29, 0.35) 24px
+      );
+      border-bottom: 2px solid var(--status-trip);
+      padding: 0.6rem 1.25rem;
+      color: #fecaca;
+      font-weight: 700;
+      font-size: 0.85rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .hazard-banner.visible {
+      display: flex;
+    }
+
+    /* =========================================================================
+       4. MAIN SPLIT WORKSPACE
+       ========================================================================= */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      flex: 1;
+      max-width: 1680px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 1080px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+    }
+
+    .panel-header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.65rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .panel-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-body {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    /* =========================================================================
+       5. LEFT PANEL: P&ID SVG + FIELD DEVICE CONTROLS
+       ========================================================================= */
+    .pid-stage {
+      background: #090f1d;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      position: relative;
+      padding: 0.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .pid-svg {
+      width: 100%;
+      max-width: 680px;
+      height: auto;
+      display: block;
+      user-select: none;
+    }
+
+    .svg-clickable {
+      cursor: pointer;
+      transition: filter 0.15s ease;
+    }
+
+    .svg-clickable:hover {
+      filter: brightness(1.18);
+    }
+
+    /* Field Control Deck Grid */
+    .field-deck {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 0.6rem;
+    }
+
+    .device-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.6rem 0.7rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.45rem;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+
+    .device-card.safe {
+      border-left: 3px solid var(--status-safe);
+    }
+
+    .device-card.trip {
+      border-left: 3px solid var(--status-trip);
+      background: rgba(239, 68, 68, 0.07);
+    }
+
+    .device-card.warn {
+      border-left: 3px solid var(--status-warn);
+      background: rgba(245, 158, 11, 0.07);
+    }
+
+    .device-card.bypassed {
+      border: 1px dashed var(--status-warn);
+      background: rgba(245, 158, 11, 0.12);
+    }
+
+    .device-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.35rem;
+    }
+
+    .device-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent-blue);
+    }
+
+    .device-addr {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      color: var(--text-muted);
+    }
+
+    .device-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .device-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.15rem;
+    }
+
+    .ctrl-btn {
+      flex: 1;
+      border: 1px solid var(--border-strong);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.4rem 0.45rem;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.12s ease;
+    }
+
+    .ctrl-btn:hover {
+      background: #2c3e63;
+    }
+
+    .ctrl-btn:active {
+      transform: translateY(1px);
+    }
+
+    .ctrl-btn.btn-start {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: var(--status-safe);
+      color: #6ee7b7;
+    }
+
+    .ctrl-btn.btn-start:active,
+    .ctrl-btn.btn-start.pressed {
+      background: var(--status-safe);
+      color: #052e16;
+    }
+
+    .ctrl-btn.btn-stop {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: var(--status-trip);
+      color: #fca5a5;
+    }
+
+    .ctrl-btn.btn-stop:active,
+    .ctrl-btn.btn-stop.pressed {
+      background: var(--status-trip);
+      color: #fff;
+    }
+
+    .ctrl-btn.state-ok {
+      background: var(--status-safe-bg);
+      border-color: var(--status-safe);
+      color: #6ee7b7;
+    }
+
+    .ctrl-btn.state-bad {
+      background: var(--status-trip-bg);
+      border-color: var(--status-trip);
+      color: #fca5a5;
+    }
+
+    .bypass-btn {
+      border: 1px solid var(--border-subtle);
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.4rem 0.45rem;
+      border-radius: 6px;
+      cursor: pointer;
+      title: "Force / Jumper Permissive Bit";
+    }
+
+    .bypass-btn:hover {
+      border-color: var(--status-warn);
+      color: var(--status-warn);
+    }
+
+    .bypass-btn.active {
+      background: var(--status-warn);
+      border-color: var(--status-warn);
+      color: #090e1a;
+    }
+
+    /* Tank Level Slider Strip */
+    .level-control-strip {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.55rem 0.85rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .level-slider-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .level-slider-group input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent-blue);
+      cursor: pointer;
+    }
+
+    /* Cause & Effect Status Bar */
+    .cause-effect-bar {
+      border-radius: 8px;
+      padding: 0.75rem 0.9rem;
+      border: 1px solid var(--status-safe);
+      background: var(--status-safe-bg);
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .cause-effect-bar.trip {
+      border-color: var(--status-trip);
+      background: var(--status-trip-bg);
+    }
+
+    .cause-effect-bar.warn {
+      border-color: var(--status-warn);
+      background: var(--status-warn-bg);
+    }
+
+    .ce-headline {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ce-permissives {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.2rem;
+    }
+
+    .perm-chip {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+
+    .perm-chip.ok {
+      background: rgba(16, 185, 129, 0.16);
+      border-color: rgba(16, 185, 129, 0.45);
+      color: #6ee7b7;
+    }
+
+    .perm-chip.bad {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+    }
+
+    .perm-chip.bypass {
+      background: rgba(245, 158, 11, 0.25);
+      border-color: var(--status-warn);
+      color: #fde68a;
+    }
+
+    /* =========================================================================
+       6. RIGHT PANEL: MODE A (OPERATOR & PHA WALKTHROUGH)
+       ========================================================================= */
+    .scenario-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .scenario-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .scenario-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--accent-blue);
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 0.18rem 0.55rem;
+      border-radius: 4px;
+    }
+
+    .scenario-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .scenario-desc {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+    }
+
+    .checklist {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .check-item {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      font-size: 0.83rem;
+      transition: all 0.2s ease;
+    }
+
+    .check-item.done {
+      border-color: rgba(16, 185, 129, 0.55);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .check-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      border: 2px solid var(--border-strong);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: transparent;
+    }
+
+    .check-item.done .check-box {
+      background: var(--status-safe);
+      border-color: var(--status-safe);
+      color: #052e16;
+    }
+
+    .ehs-takeaway {
+      background: rgba(56, 189, 248, 0.08);
+      border-left: 3px solid var(--accent-blue);
+      border-radius: 6px;
+      padding: 0.7rem 0.85rem;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+    }
+
+    .ehs-takeaway strong {
+      color: var(--accent-blue);
+      display: block;
+      margin-bottom: 0.2rem;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+    }
+
+    .scenario-complete-banner {
+      display: none;
+      background: var(--status-safe-bg);
+      border: 1px solid var(--status-safe);
+      border-radius: 8px;
+      padding: 0.75rem 0.9rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .scenario-complete-banner.visible {
+      display: flex;
+    }
+
+    .action-primary-btn {
+      background: var(--status-safe);
+      color: #052e16;
+      border: none;
+      font-weight: 700;
+      font-size: 0.78rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .action-secondary-btn {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .action-secondary-btn:hover {
+      border-color: var(--accent-blue);
+    }
+
+    /* Quick Process Telemetry Cards in Operator View */
+    .process-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+    }
+
+    .metric-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+    }
+
+    .metric-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 0.15rem;
+    }
+
+    /* =========================================================================
+       7. RIGHT PANEL: MODE B (TECHNICAL PLC / LADDER LOGIC VIEW)
+       ========================================================================= */
+    .ladder-container {
+      background: #080d19;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      overflow-x: auto;
+    }
+
+    .rung-block {
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      background: #0c1324;
+      padding: 0.45rem 0.6rem;
+    }
+
+    .rung-comment {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: #64748b;
+      margin-bottom: 0.35rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .rung-svg {
+      width: 100%;
+      min-width: 520px;
+      height: auto;
+      display: block;
+    }
+
+    /* Live I/O Monitor Table */
+    .io-table-wrap {
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      overflow-x: auto;
+      background: var(--bg-card);
+    }
+
+    .io-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+    }
+
+    .io-table th {
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      text-align: left;
+      padding: 0.45rem 0.65rem;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border-strong);
+    }
+
+    .io-table td {
+      padding: 0.38rem 0.65rem;
+      border-bottom: 1px solid rgba(44, 61, 94, 0.5);
+      color: var(--text-primary);
+    }
+
+    .io-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .bit-pill {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.68rem;
+    }
+
+    .bit-1 {
+      background: rgba(16, 185, 129, 0.22);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+
+    .bit-0 {
+      background: rgba(100, 116, 139, 0.2);
+      color: #94a3b8;
+      border: 1px solid rgba(100, 116, 139, 0.35);
+    }
+
+    .bit-force {
+      background: rgba(245, 158, 11, 0.25);
+      color: #fbbf24;
+      border: 1px solid var(--status-warn);
+      margin-left: 0.3rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- =======================================================================
+       TOP SCADA HEADER BAR
+       ======================================================================= -->
+  <header class="scada-header">
+    <div class="brand-group">
+      <div class="rds-badge">RANGE DATA SERVICES</div>
+      <div class="title-block">
+        <h1>Process Safety &amp; Interlock Simulator</h1>
+        <div class="subtitle">UNIT 402: SOLVENT POST-MIXER &amp; BATCH TANK (CLASS I, DIV 1)</div>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <!-- Scenario Selector -->
+      <select id="scenarioSelect" class="scenario-select" aria-label="Select Training Scenario"></select>
+
+      <!-- Mode Toggle Switch -->
+      <div class="control-pill" role="group" aria-label="View Mode">
+        <button id="btnModeOperator" class="mode-btn active" type="button">Operator / PHA View</button>
+        <button id="btnModeTechnical" class="mode-btn" type="button">Technical PLC / Ladder View</button>
+      </div>
+
+      <!-- Deterministic PLC Scan Telemetry -->
+      <div id="telemetryBadge" class="telemetry-badge" title="Deterministic 20ms PLC Scan Loop">
+        <span id="scanLed" class="scan-led"></span>
+        <span id="telemetryText">RUN | 20ms Scan | Faults: 0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- =======================================================================
+       CASCADING HAZARD WARNING BANNER (SHOWN WHEN INTERLOCKS ARE BYPASSED)
+       ======================================================================= -->
+  <div id="hazardBanner" class="hazard-banner" role="alert">
+    <span id="hazardBannerText">⚠️ ACTIVE BYPASS DETECTED — SAFETY INTEGRITY COMPROMISED</span>
+    <button id="btnClearBypasses" class="action-secondary-btn" type="button">Clear All Forces</button>
+  </div>
+
+  <!-- =======================================================================
+       MAIN SPLIT WORKSPACE
+       ======================================================================= -->
+  <main class="workspace">
+    <!-- =====================================================================
+         LEFT PANEL: INTERACTIVE P&ID & FIELD DEVICE CONTROLS
+         ===================================================================== -->
+    <section class="panel" aria-label="Interactive P&ID Process Schematic">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>P&amp;ID Schematic — Unit 402 Floor-Mounted Disperser</span>
+        </div>
+        <button id="btnResetUnit" class="action-secondary-btn" type="button">Reset Unit State</button>
+      </div>
+
+      <div class="panel-body">
+        <!-- SVG P&ID Visualization -->
+        <div class="pid-stage">
+          <svg id="pidSvg" class="pid-svg" viewBox="0 0 680 390" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <!-- Subtle Industrial Grid -->
+              <pattern id="pidGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#142038" stroke-width="1" />
+              </pattern>
+              <!-- Liquid Gradient -->
+              <linearGradient id="solventGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0284c7" stop-opacity="0.82" />
+                <stop offset="100%" stop-color="#1e3a8a" stop-opacity="0.95" />
+              </linearGradient>
+              <!-- Steel Post Gradient -->
+              <linearGradient id="steelGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#334155" />
+                <stop offset="50%" stop-color="#64748b" />
+                <stop offset="100%" stop-color="#1e293b" />
+              </linearGradient>
+            </defs>
+
+            <!-- Background Grid -->
+            <rect width="680" height="390" fill="url(#pidGrid)" rx="6" />
+
+            <!-- Plant Floor Slab -->
+            <rect x="20" y="348" width="640" height="16" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="2" />
+            <line x1="20" y1="364" x2="660" y2="364" stroke="#334155" stroke-width="2" stroke-dasharray="8 6" />
+
+            <!-- ===============================================================
+                 SOLVENT FEED PIPING & AUTOMATED VALVE (XV-401)
+                 =============================================================== -->
+            <text x="35" y="36" fill="#94a3b8" font-family="monospace" font-size="11" font-weight="bold">SOLVENT HEADER (TOLUENE / XYLENE)</text>
+            <!-- Pipe from left header into tank -->
+            <path d="M 35 52 L 355 52 L 355 138" fill="none" stroke="#475569" stroke-width="10" stroke-linejoin="round" />
+            <path id="solventPipeFlow" d="M 35 52 L 355 52 L 355 138" fill="none" stroke="#38bdf8" stroke-width="4" stroke-dasharray="10 8" opacity="0" />
+
+            <!-- Automated Block Valve XV-401 -->
+            <g id="svgValveXV401" transform="translate(185, 52)">
+              <!-- Valve Body Bowtie -->
+              <polygon points="-18,-12 0,0 -18,12" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+              <polygon points="18,-12 0,0 18,12" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+              <!-- Stem & Actuator -->
+              <line x1="0" y1="0" x2="0" y2="-22" stroke="#94a3b8" stroke-width="2" />
+              <rect id="xv401Actuator" x="-16" y="-38" width="32" height="16" rx="3" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5" />
+              <text x="0" y="-27" text-anchor="middle" fill="#fff" font-family="monospace" font-size="9" font-weight="bold">XV-401</text>
+              <text id="xv401StateTxt" x="0" y="25" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="10" font-weight="bold">CLOSED</text>
+            </g>
+
+            <!-- Falling Solvent Stream into Tank -->
+            <line id="solventStream" x1="355" y1="138" x2="355" y2="335" stroke="#38bdf8" stroke-width="5" stroke-dasharray="8 6" opacity="0" />
+
+            <!-- ===============================================================
+                 FLOOR-MOUNTED POST MIXER & HYDRAULIC LIFT COLUMN
+                 =============================================================== -->
+            <!-- Baseplate bolted to floor -->
+            <rect x="115" y="336" width="76" height="12" fill="#475569" stroke="#94a3b8" stroke-width="1.5" rx="2" />
+            <!-- Main Vertical Steel Post -->
+            <rect x="135" y="95" width="36" height="241" fill="url(#steelGrad)" stroke="#64748b" stroke-width="1.5" />
+            <text x="153" y="235" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="10" font-weight="bold" transform="rotate(-90 153 235)">HYDRAULIC POST</text>
+
+            <!-- Lift Down Limit Switch ZS-403 mounted on post -->
+            <g id="svgZS403" class="svg-clickable" transform="translate(182, 130)">
+              <rect x="0" y="-12" width="66" height="24" rx="4" fill="#1e293b" stroke="#10b981" stroke-width="1.5" />
+              <circle id="zs403Led" cx="11" cy="0" r="4.5" fill="#10b981" />
+              <text x="21" y="4" fill="#f1f5f9" font-family="monospace" font-size="10" font-weight="bold">ZS-403</text>
+              <text x="0" y="22" fill="#94a3b8" font-family="monospace" font-size="9">LIFT DOWN</text>
+            </g>
+
+            <!-- Movable Mixer Head Assembly (Translates vertically based on ZS-403) -->
+            <g id="mixerHeadGroup" transform="translate(0, 0)" style="transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);">
+              <!-- Cantilever Boom Arm -->
+              <rect x="128" y="88" width="190" height="24" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+              <!-- XP Motor Housing (Class I Div 1) -->
+              <rect id="motorHousing" x="268" y="44" width="64" height="44" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="2" />
+              <!-- Cooling Fins -->
+              <line x1="276" y1="52" x2="324" y2="52" stroke="#475569" stroke-width="2" />
+              <line x1="276" y1="60" x2="324" y2="60" stroke="#475569" stroke-width="2" />
+              <line x1="276" y1="68" x2="324" y2="68" stroke="#475569" stroke-width="2" />
+              <text x="300" y="81" text-anchor="middle" fill="#e2e8f0" font-family="monospace" font-size="9" font-weight="bold">M-402 XP</text>
+
+              <!-- Agitator Shaft -->
+              <rect x="296" y="112" width="8" height="192" fill="#cbd5e1" stroke="#475569" stroke-width="1" />
+
+              <!-- Cowles Sawtooth Dispersion Blade -->
+              <g id="cowlesBladeGroup" transform="translate(300, 304)">
+                <ellipse id="bladeDisc" cx="0" cy="0" rx="34" ry="6" fill="#e2e8f0" stroke="#475569" stroke-width="1.5" />
+                <!-- Sawtooth teeth -->
+                <polygon id="bladeTeeth" points="-34,0 -38,-5 -28,-3 -20,-6 -10,-3 0,-6 10,-3 20,-6 28,-3 38,-5 34,0 38,5 28,3 20,6 10,3 0,6 -10,3 -20,6 -28,3 -38,5" fill="#94a3b8" />
+              </g>
+            </g>
+
+            <!-- ===============================================================
+                 PORTABLE MIXING CHANGE-CAN (TANK T-402)
+                 =============================================================== -->
+            <g transform="translate(225, 165)">
+              <!-- Tank Interior Background -->
+              <rect x="0" y="0" width="165" height="172" rx="4" fill="#0f172a" stroke="#64748b" stroke-width="2.5" />
+
+              <!-- Solvent Liquid Fill (Dynamic height via JS) -->
+              <rect id="tankLiquidRect" x="2" y="85" width="161" height="85" fill="url(#solventGrad)" />
+
+              <!-- Animated Vortex Swirl when Mixer Spins -->
+              <g id="vortexGroup" opacity="0">
+                <path id="vortexWave1" d="M 10 92 Q 45 106 75 95 T 155 92" fill="none" stroke="#7dd3fc" stroke-width="2.5" />
+                <path id="vortexWave2" d="M 22 112 Q 75 124 138 112" fill="none" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="12 6" />
+                <path d="M 35 135 Q 75 144 120 135" fill="none" stroke="#0284c7" stroke-width="1.5" />
+              </g>
+
+              <!-- LSHH-404 High-High Level Probe -->
+              <g id="svgLSHH404" class="svg-clickable" transform="translate(132, 0)">
+                <line x1="0" y1="0" x2="0" y2="34" stroke="#f59e0b" stroke-width="3" />
+                <circle id="lshhProbeTip" cx="0" cy="34" r="5" fill="#10b981" stroke="#0f172a" stroke-width="1.5" />
+                <!-- Dashed LSHH Trip Line across tank (at 80% level -> y = 34px) -->
+                <line x1="-130" y1="34" x2="30" y2="34" stroke="#ef4444" stroke-width="1" stroke-dasharray="4 4" />
+                <text x="-126" y="30" fill="#fca5a5" font-family="monospace" font-size="8.5" font-weight="bold">LSHH-404 TRIP (80%)</text>
+              </g>
+
+              <!-- Tank Outline Foreground -->
+              <rect x="0" y="0" width="165" height="172" rx="4" fill="none" stroke="#94a3b8" stroke-width="2.5" />
+              <!-- Caster Wheels -->
+              <circle cx="24" cy="178" r="6" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+              <circle cx="141" cy="178" r="6" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+              <text x="82" y="162" text-anchor="middle" fill="#e2e8f0" font-family="monospace" font-size="10" font-weight="bold">CHANGE-CAN T-402</text>
+            </g>
+
+            <!-- ===============================================================
+                 TANK LOCK CLAMP (ZS-402) & STATIC GROUND CLAMP (GS-401)
+                 =============================================================== -->
+            <!-- Tank Lock Clamp ZS-402 -->
+            <g id="svgZS402" class="svg-clickable" transform="translate(172, 282)">
+              <rect id="clampArmRect" x="0" y="-6" width="53" height="12" rx="2" fill="#10b981" stroke="#064e3b" stroke-width="1.5" />
+              <rect x="-12" y="-14" width="22" height="28" rx="3" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5" />
+              <text x="-38" y="-18" fill="#f1f5f9" font-family="monospace" font-size="10" font-weight="bold">ZS-402</text>
+              <text x="-38" y="-7" fill="#94a3b8" font-family="monospace" font-size="8.5">TANK CLAMP</text>
+            </g>
+
+            <!-- Static Ground Clamp GS-401 -->
+            <g id="svgGS401" class="svg-clickable" transform="translate(390, 312)">
+              <!-- Ground Wire to Plant Earth Bus -->
+              <path id="groundWirePath" d="M 16 0 C 48 0, 52 36, 78 36" fill="none" stroke="#10b981" stroke-width="3" />
+              <!-- Alligator Clamp Jaw -->
+              <polygon id="groundClampJaw" points="0,0 18,-8 18,8" fill="#10b981" stroke="#064e3b" stroke-width="1.5" />
+              <!-- Earth Ground Symbol -->
+              <line x1="78" y1="26" x2="78" y2="44" stroke="#10b981" stroke-width="2" />
+              <line x1="68" y1="44" x2="88" y2="44" stroke="#10b981" stroke-width="2" />
+              <line x1="71" y1="49" x2="85" y2="49" stroke="#10b981" stroke-width="2" />
+              <line x1="74" y1="54" x2="82" y2="54" stroke="#10b981" stroke-width="2" />
+              <text x="24" y="-10" fill="#f1f5f9" font-family="monospace" font-size="10" font-weight="bold">GS-401</text>
+              <text x="24" y="2" fill="#94a3b8" font-family="monospace" font-size="8.5">STATIC BOND</text>
+            </g>
+
+            <!-- ===============================================================
+                 LOCAL OPERATOR CONTROL STATION (PUSHBUTTONS + E-STOP)
+                 =============================================================== -->
+            <g transform="translate(500, 62)">
+              <rect x="0" y="0" width="155" height="235" rx="8" fill="#1e293b" stroke="#475569" stroke-width="2" />
+              <rect x="8" y="8" width="139" height="24" rx="4" fill="#0f172a" />
+              <text x="77" y="24" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="10" font-weight="bold">LOCAL PANEL LCP-402</text>
+
+              <!-- Running Pilot Light -->
+              <circle id="svgPilotRun" cx="35" cy="54" r="9" fill="#064e3b" stroke="#475569" stroke-width="2" />
+              <text x="54" y="58" fill="#cbd5e1" font-family="monospace" font-size="10" font-weight="bold">MIXER RUN</text>
+
+              <!-- Interlock Ready Pilot Light -->
+              <circle id="svgPilotReady" cx="35" cy="82" r="9" fill="#064e3b" stroke="#475569" stroke-width="2" />
+              <text x="54" y="86" fill="#cbd5e1" font-family="monospace" font-size="10" font-weight="bold">PERMISSIVES OK</text>
+
+              <!-- Start Pushbutton (Clickable) -->
+              <g id="svgBtnStart" class="svg-clickable" transform="translate(46, 125)">
+                <circle cx="0" cy="0" r="18" fill="#065f46" stroke="#10b981" stroke-width="2.5" />
+                <text x="0" y="4" text-anchor="middle" fill="#fff" font-family="monospace" font-size="9" font-weight="bold">START</text>
+              </g>
+
+              <!-- Stop Pushbutton (Clickable) -->
+              <g id="svgBtnStop" class="svg-clickable" transform="translate(108, 125)">
+                <circle cx="0" cy="0" r="18" fill="#7f1d1d" stroke="#ef4444" stroke-width="2.5" />
+                <text x="0" y="4" text-anchor="middle" fill="#fff" font-family="monospace" font-size="9" font-weight="bold">STOP</text>
+              </g>
+
+              <!-- E-Stop Mushroom Button (Clickable) -->
+              <g id="svgBtnEstop" class="svg-clickable" transform="translate(77, 188)">
+                <!-- Yellow Safety Collar -->
+                <circle cx="0" cy="0" r="28" fill="#facc15" stroke="#ca8a04" stroke-width="2" />
+                <!-- Red Mushroom Cap -->
+                <circle id="estopCap" cx="0" cy="0" r="21" fill="#dc2626" stroke="#7f1d1d" stroke-width="2" />
+                <text x="0" y="-3" text-anchor="middle" fill="#fff" font-family="monospace" font-size="8.5" font-weight="bold">E-STOP</text>
+                <text id="estopStatusTxt" x="0" y="8" text-anchor="middle" fill="#fef08a" font-family="monospace" font-size="7.5" font-weight="bold">ARMED</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Tank Level & Solvent Fill Controls -->
+        <div class="level-control-strip">
+          <div class="level-slider-group">
+            <span class="device-tag">LT-404 LEVEL:</span>
+            <input id="tankLevelSlider" type="range" min="0" max="100" value="45" aria-label="Tank Level Percentage" />
+            <span id="tankLevelLabel" class="device-tag" style="min-width: 42px; text-align: right;">45%</span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button id="btnToggleFeed" class="ctrl-btn" type="button" style="min-width: 155px;">Solvent Feed: CLOSED</button>
+            <button id="btnDrainTank" class="action-secondary-btn" type="button">Drain to 35%</button>
+          </div>
+        </div>
+
+        <!-- Interactive Field Safeguard Devices Grid -->
+        <div class="field-deck" id="fieldDeck"></div>
+
+        <!-- Live Interlock Cause & Effect Status Bar -->
+        <div id="causeEffectBar" class="cause-effect-bar">
+          <div id="ceHeadline" class="ce-headline">ALL SAFETY PERMISSIVES SATISFIED — READY FOR BATCH START</div>
+          <div id="cePermissives" class="ce-permissives"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         RIGHT PANEL: DUAL-MODE LOGIC & TRAINING VIEW
+         ===================================================================== -->
+    <section class="panel" aria-label="Training & PLC Logic Panel">
+      <div class="panel-header">
+        <div class="panel-title" id="rightPanelTitle">Operator &amp; PHA Walkthrough</div>
+        <span class="device-addr" id="rightPanelSubtitle">MODE A — PROCESS SAFETY</span>
+      </div>
+
+      <!-- ===================================================================
+           MODE A: OPERATOR & PHA WALKTHROUGH VIEW (DEFAULT)
+           =================================================================== -->
+      <div id="viewModeOperator" class="panel-body">
+        <!-- Quick Process Metrics -->
+        <div class="process-metrics">
+          <div class="metric-box">
+            <div class="metric-label">Agitator Speed</div>
+            <div class="metric-value" id="metricRpm">0 RPM</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Batch Mix Timer</div>
+            <div class="metric-value" id="metricTimer">0.0 / 15.0s</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">SIS Loop State</div>
+            <div class="metric-value" id="metricSisState" style="color: var(--status-safe);">HEALTHY</div>
+          </div>
+        </div>
+
+        <!-- Scenario Card -->
+        <div class="scenario-card">
+          <div class="scenario-meta">
+            <span class="scenario-tag" id="scenBadge">SCENARIO 1 OF 4</span>
+            <button id="btnResetScenario" class="action-secondary-btn" type="button">Restart Mission</button>
+          </div>
+          <h2 class="scenario-title" id="scenTitle">Loading Scenario...</h2>
+          <p class="scenario-desc" id="scenDesc"></p>
+
+          <!-- Dynamic Checklist -->
+          <ul class="checklist" id="scenChecklist"></ul>
+
+          <!-- Completion Banner -->
+          <div id="scenCompleteBanner" class="scenario-complete-banner">
+            <div>
+              <strong style="color: #6ee7b7; font-size: 0.85rem;">✓ Scenario Objectives Verified</strong>
+              <div style="font-size: 0.76rem; color: #cbd5e1;">Proceed to the next PHA / Interlock challenge.</div>
+            </div>
+            <button id="btnNextScenario" class="action-primary-btn" type="button">Next Scenario →</button>
+          </div>
+
+          <!-- EHS / PSM Takeaway -->
+          <div class="ehs-takeaway">
+            <strong>EHS / Process Safety Management Takeaway</strong>
+            <span id="scenTakeaway"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+           MODE B: TECHNICAL PLC / LADDER LOGIC VIEW
+           =================================================================== -->
+      <div id="viewModeTechnical" class="panel-body hidden">
+        <!-- Live-Animated Ladder Logic Diagram -->
+        <div class="ladder-container" id="ladderContainer">
+          <!-- RUNG 0: Safety Permissive Chain -->
+          <div class="rung-block">
+            <div class="rung-comment">
+              <span>RUNG 0000 — MASTER SAFETY PERMISSIVE CHAIN (SIS INTERLOCKS)</span>
+              <span id="rung0Status">TRUE</span>
+            </div>
+            <svg class="rung-svg" viewBox="0 0 620 68">
+              <!-- Left & Right Power Rails -->
+              <line id="r0_railL" x1="12" y1="6" x2="12" y2="62" stroke="#10b981" stroke-width="4" />
+              <line x1="608" y1="6" x2="608" y2="62" stroke="#475569" stroke-width="4" />
+              <!-- Wire Segments -->
+              <line id="r0_w0" x1="12" y1="34" x2="48" y2="34" stroke="#10b981" stroke-width="2.5" />
+              <line id="r0_w1" x1="92" y1="34" x2="148" y2="34" stroke="#10b981" stroke-width="2.5" />
+              <line id="r0_w2" x1="192" y1="34" x2="248" y2="34" stroke="#10b981" stroke-width="2.5" />
+              <line id="r0_w3" x1="292" y1="34" x2="348" y2="34" stroke="#10b981" stroke-width="2.5" />
+              <line id="r0_w4" x1="392" y1="34" x2="448" y2="34" stroke="#10b981" stroke-width="2.5" />
+              <line id="r0_w5" x1="492" y1="34" x2="545" y2="34" stroke="#10b981" stroke-width="2.5" />
+              <line id="r0_w6" x1="577" y1="34" x2="608" y2="34" stroke="#10b981" stroke-width="2.5" />
+
+              <!-- Contact 1: E-Stop OK (I:0/2) -->
+              <g id="ld_estop"></g>
+              <!-- Contact 2: Static Ground GS-401 (I:0/3) -->
+              <g id="ld_ground"></g>
+              <!-- Contact 3: Tank Clamp ZS-402 (I:0/4) -->
+              <g id="ld_clamp"></g>
+              <!-- Contact 4: Lift Down ZS-403 (I:0/5) -->
+              <g id="ld_lift"></g>
+              <!-- Contact 5: LSHH-404 OK (I:0/6) -->
+              <g id="ld_lshh"></g>
+              <!-- Coil: Safety Permissive OK (B3:0/0) -->
+              <g id="ld_perm_coil"></g>
+            </svg>
+          </div>
+
+          <!-- RUNG 1: Mixer Motor Seal-In Circuit -->
+          <div class="rung-block">
+            <div class="rung-comment">
+              <span>RUNG 0001 — POST-MIXER MOTOR START/STOP SEAL-IN CIRCUIT</span>
+              <span id="rung1Status">FALSE</span>
+            </div>
+            <svg class="rung-svg" viewBox="0 0 620 96">
+              <line id="r1_railL" x1="12" y1="6" x2="12" y2="90" stroke="#10b981" stroke-width="4" />
+              <line x1="608" y1="6" x2="608" y2="90" stroke="#475569" stroke-width="4" />
+
+              <!-- Main Upper Branch -->
+              <line id="r1_w0" x1="12" y1="28" x2="58" y2="28" stroke="#10b981" stroke-width="2.5" />
+              <!-- Lower Seal-In Branch -->
+              <path id="r1_branch" d="M 32 28 L 32 72 L 58 72 M 102 72 L 136 72 L 136 28" fill="none" stroke="#475569" stroke-width="2.5" />
+
+              <line id="r1_w1" x1="102" y1="28" x2="178" y2="28" stroke="#475569" stroke-width="2.5" />
+              <line id="r1_w2" x1="222" y1="28" x2="298" y2="28" stroke="#475569" stroke-width="2.5" />
+              <line id="r1_w3" x1="342" y1="28" x2="418" y2="28" stroke="#475569" stroke-width="2.5" />
+              <line id="r1_w4" x1="462" y1="28" x2="545" y2="28" stroke="#475569" stroke-width="2.5" />
+              <line id="r1_w5" x1="577" y1="28" x2="608" y2="28" stroke="#475569" stroke-width="2.5" />
+
+              <!-- Start PB (I:0/0) -->
+              <g id="ld_start"></g>
+              <!-- Seal-in Contact (O:0/0) -->
+              <g id="ld_seal"></g>
+              <!-- Stop PB NC (I:0/1) -->
+              <g id="ld_stop"></g>
+              <!-- Master Permissive (B3:0/0) -->
+              <g id="ld_perm_in1"></g>
+              <!-- VFD Fault XIO (I:0/7) -->
+              <g id="ld_fault"></g>
+              <!-- Mixer Motor Coil (O:0/0) -->
+              <g id="ld_motor_coil"></g>
+            </svg>
+          </div>
+
+          <!-- RUNG 2: Solvent Feed Valve XV-401 Interlock -->
+          <div class="rung-block">
+            <div class="rung-comment">
+              <span>RUNG 0002 — AUTOMATED SOLVENT FEED VALVE (XV-401) OVERFILL &amp; GROUND INTERLOCK</span>
+              <span id="rung2Status">FALSE</span>
+            </div>
+            <svg class="rung-svg" viewBox="0 0 620 68">
+              <line id="r2_railL" x1="12" y1="6" x2="12" y2="62" stroke="#10b981" stroke-width="4" />
+              <line x1="608" y1="6" x2="608" y2="62" stroke="#475569" stroke-width="4" />
+
+              <line id="r2_w0" x1="12" y1="34" x2="78" y2="34" stroke="#10b981" stroke-width="2.5" />
+              <line id="r2_w1" x1="122" y1="34" x2="228" y2="34" stroke="#475569" stroke-width="2.5" />
+              <line id="r2_w2" x1="272" y1="34" x2="378" y2="34" stroke="#475569" stroke-width="2.5" />
+              <line id="r2_w3" x1="422" y1="34" x2="545" y2="34" stroke="#475569" stroke-width="2.5" />
+              <line id="r2_w4" x1="577" y1="34" x2="608" y2="34" stroke="#475569" stroke-width="2.5" />
+
+              <!-- Feed Request (B3:0/1) -->
+              <g id="ld_feed_req"></g>
+              <!-- Ground Clamp OK (I:0/3) -->
+              <g id="ld_feed_gnd"></g>
+              <!-- LSHH-404 OK (I:0/6) -->
+              <g id="ld_feed_lshh"></g>
+              <!-- Solvent Valve Coil (O:0/1) -->
+              <g id="ld_valve_coil"></g>
+            </svg>
+          </div>
+
+          <!-- RUNG 3: Batch Mix Cycle TON Timer -->
+          <div class="rung-block">
+            <div class="rung-comment">
+              <span>RUNG 0003 — BATCH DISPERSION TIMER (T4:0 TON — 15.0s PRE)</span>
+              <span id="rung3Status">ACC: 0ms</span>
+            </div>
+            <svg class="rung-svg" viewBox="0 0 620 74">
+              <line id="r3_railL" x1="12" y1="6" x2="12" y2="68" stroke="#10b981" stroke-width="4" />
+              <line x1="608" y1="6" x2="608" y2="68" stroke="#475569" stroke-width="4" />
+
+              <line id="r3_w0" x1="12" y1="36" x2="118" y2="36" stroke="#10b981" stroke-width="2.5" />
+              <line id="r3_w1" x1="162" y1="36" x2="360" y2="36" stroke="#475569" stroke-width="2.5" />
+              <line id="r3_w2" x1="560" y1="36" x2="608" y2="36" stroke="#475569" stroke-width="2.5" />
+
+              <!-- Motor Running Contact (O:0/0) -->
+              <g id="ld_tmr_en"></g>
+
+              <!-- TON Timer Instruction Box -->
+              <g transform="translate(360, 8)">
+                <rect id="tonBox" x="0" y="0" width="200" height="56" rx="4" fill="#131c31" stroke="#475569" stroke-width="2" />
+                <text x="100" y="16" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="10" font-weight="bold">TON  TIMER ON DELAY</text>
+                <text x="12" y="32" fill="#cbd5e1" font-family="monospace" font-size="9.5">Timer: T4:0   Base: 0.001</text>
+                <text id="tonAccText" x="12" y="47" fill="#94a3b8" font-family="monospace" font-size="9.5">PRE: 15000  ACC: 0</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Live I/O & Tag Monitor Table -->
+        <div class="io-table-wrap">
+          <table class="io-table" aria-label="Live PLC I/O Tag Table">
+            <thead>
+              <tr>
+                <th>PLC Address</th>
+                <th>Tag Symbol</th>
+                <th>Field Device / Description</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody id="ioTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =======================================================================
+       SIMULATION ENGINE, LADDER LOGIC EVALUATOR & SCENARIO CONTROLLER
+       ======================================================================= -->
+  <script>
+    (function () {
+      "use strict";
+
+      /* =====================================================================
+         1. DETERMINISTIC PLC DATA TABLES & PROCESS STATE
+         ===================================================================== */
+      const SCAN_MS = 20; // 20ms deterministic scan cycle
+
+      // Physical Field Inputs (Raw Hardware States)
+      const fieldInputs = {
+        startPB: false,       // I:0/0 - Momentary NO Start Pushbutton
+        stopPB: true,         // I:0/1 - Momentary NC Stop Pushbutton (true = healthy/closed)
+        estopOK: true,        // I:0/2 - Latching E-Stop (true = armed/healthy, false = tripped)
+        groundClamp: true,    // I:0/3 - GS-401 Static Ground Clamp (true = bonded)
+        tankClamp: true,      // I:0/4 - ZS-402 Tank Lock Clamp (true = engaged)
+        liftDown: true,       // I:0/5 - ZS-403 Mixer Lift Down (true = blade inside tank)
+        lshhOK: true,         // I:0/6 - LSHH-404 High-High Level Switch (true = normal, false = >=80% trip)
+        vfdFault: false       // I:0/7 - MA-405 VFD Overload / Loss of Rotation (true = faulted)
+      };
+
+      // Maintenance / Operator Forces (Bypass jumpers on permissives)
+      const forces = {
+        groundClamp: false,
+        tankClamp: false,
+        liftDown: false,
+        lshhOK: false
+      };
+
+      // Effective Input Image Table (Evaluated at start of each 20ms scan)
+      const I = {
+        "I:0/0": false,
+        "I:0/1": true,
+        "I:0/2": true,
+        "I:0/3": true,
+        "I:0/4": true,
+        "I:0/5": true,
+        "I:0/6": true,
+        "I:0/7": false
+      };
+
+      // Internal Binary Bits
+      const B3 = {
+        "B3:0/0": false, // Master Safety Permissive Chain OK
+        "B3:0/1": false  // Operator Solvent Feed Request
+      };
+
+      // Physical Outputs
+      const O = {
+        "O:0/0": false, // M-402 Post-Mixer Motor Contactor
+        "O:0/1": false  // XV-401 Automated Solvent Feed Valve
+      };
+
+      // Timer Structure (T4:0)
+      const T4 = {
+        PRE: 15000, // 15.0 seconds
+        ACC: 0,
+        EN: false,
+        DN: false
+      };
+
+      // Continuous Process Physics State
+      const process = {
+        tankLevel: 45.0,   // 0 - 100%
+        rpm: 0,            // 0 - 1450 RPM
+        bladeAngle: 0,     // Animation phase
+        scanCount: 0,
+        lastTripReason: "NONE",
+        everStarted: false,
+        trippedByGroundDuringRun: false,
+        trippedByLshhDuringFeed: false,
+        hazardCreatedByBypass: false
+      };
+
+      /* =====================================================================
+         2. JSON-DRIVEN TRAINING SCENARIOS (EXTENSIBLE FOR RDS LIBRARY)
+         ===================================================================== */
+      const SCENARIOS = [
+        {
+          id: "scen-1",
+          badge: "SCENARIO 1 OF 4 • STARTUP & SEAL-IN",
+          title: "Normal Batch Startup & Seal-In",
+          description:
+            "Verify all Unit 402 safety permissives (E-Stop armed, Static Ground GS-401 bonded, Tank Clamp ZS-402 engaged, Lift Down ZS-403, and Level < 80%), then press START to latch the post-mixer motor contactor.",
+          takeaway:
+            "A momentary Start pushbutton relies on an auxiliary seal-in contact (O:0/0) wired in parallel. Because all safety permissives sit in series ahead of the coil, any single safeguard opening immediately breaks the seal-in circuit.",
+          init: () => {
+            resetAllToSafeDefaults();
+            process.tankLevel = 45.0;
+          },
+          steps: [
+            {
+              text: "Verify all 5 safety permissives are healthy (Green chips below P&ID).",
+              check: () => B3["B3:0/0"] === true && !anyBypassActive()
+            },
+            {
+              text: "Press and release the green START pushbutton on LCP-402 (or field deck).",
+              check: () => O["O:0/0"] === true && !fieldInputs.startPB
+            },
+            {
+              text: "Observe the Cowles blade reach operating dispersion speed (> 1,200 RPM) and hold seal-in.",
+              check: () => O["O:0/0"] === true && process.rpm >= 1200
+            }
+          ]
+        },
+        {
+          id: "scen-2",
+          badge: "SCENARIO 2 OF 4 • STATIC BONDING SIS",
+          title: "Static Ground Interlock Test (GS-401)",
+          description:
+            "Flammable solvent agitation generates high electrostatic charge. Start the mixer, then simulate an operator kicking loose the Static Ground Clamp (GS-401). Observe the fail-safe drop-out and re-clamp behavior.",
+          takeaway:
+            "When GS-401 opens, the PLC drops O:0/0 immediately—which also breaks the seal-in latch. Re-attaching the ground clamp restores the permissive, but the mixer WILL NOT restart unexpectedly until an operator intentionally presses START.",
+          init: () => {
+            resetAllToSafeDefaults();
+            process.tankLevel = 45.0;
+          },
+          steps: [
+            {
+              text: "Start the post-mixer so M-402 is actively agitating the solvent batch.",
+              check: () => process.everStarted && (O["O:0/0"] || process.trippedByGroundDuringRun)
+            },
+            {
+              text: "Disconnect the Static Ground Clamp (GS-401) while the mixer is running.",
+              check: () => process.trippedByGroundDuringRun === true
+            },
+            {
+              text: "Re-attach GS-401 and verify the mixer stays safely stopped (no auto-restart).",
+              check: () =>
+                process.trippedByGroundDuringRun === true &&
+                fieldInputs.groundClamp === true &&
+                O["O:0/0"] === false
+            }
+          ]
+        },
+        {
+          id: "scen-3",
+          badge: "SCENARIO 3 OF 4 • OVERFILL PROTECTION",
+          title: "High-High Level Overfill Trip (LSHH-404)",
+          description:
+            "Start the mixer, open the Automated Solvent Feed Valve (XV-401), and watch the change-can level rise until LSHH-404 trips at 80% capacity—shutting both the feed valve and agitator.",
+          takeaway:
+            "Independent High-High Level Switches (LSHH) prevent flammable solvent spills and splash-over during agitation. Notice that once LSHH-404 trips at 80%, XV-401 closes automatically even though the operator feed request remains ON.",
+          init: () => {
+            resetAllToSafeDefaults();
+            process.tankLevel = 62.0;
+          },
+          steps: [
+            {
+              text: "Start the post-mixer (O:0/0 energized).",
+              check: () => O["O:0/0"] === true || process.trippedByLshhDuringFeed === true
+            },
+            {
+              text: "Open Solvent Feed (XV-401) and let tank level climb to the 80% LSHH-404 trip point.",
+              check: () => process.trippedByLshhDuringFeed === true
+            },
+            {
+              text: "Confirm XV-401 automatically closed and M-402 de-energized upon LSHH trip.",
+              check: () =>
+                process.trippedByLshhDuringFeed === true &&
+                O["O:0/1"] === false &&
+                O["O:0/0"] === false
+            }
+          ]
+        },
+        {
+          id: "scen-4",
+          badge: "SCENARIO 4 OF 4 • MOC / PHA BYPASS HAZARD",
+          title: 'The "Nuisance Trip" Bypass Hazard',
+          description:
+            "A worn Static Ground Clamp (GS-401) keeps tripping mid-batch. Instead of replacing the clamp, see what happens when someone forces (jumpers) the GS-401 bit in the PLC to keep running.",
+          takeaway:
+            "Forcing safety interlock bits in PLC logic without Management of Change (MOC) and temporary compensatory safeguards blinds the SIS. Here, the PLC thinks the tank is grounded while unbonded solvent is spinning at 1,450 RPM—creating an active static ignition hazard.",
+          init: () => {
+            resetAllToSafeDefaults();
+            fieldInputs.groundClamp = false; // Simulated faulty/open clamp
+            process.tankLevel = 50.0;
+          },
+          steps: [
+            {
+              text: "Observe that M-402 refuses to start because GS-401 is open.",
+              check: () => fieldInputs.groundClamp === false && O["O:0/0"] === false || process.hazardCreatedByBypass
+            },
+            {
+              text: "Click the [FORCE] button on GS-401 to jumper out the open ground switch.",
+              check: () => forces.groundClamp === true
+            },
+            {
+              text: "Press START to run the mixer with an unbonded tank and observe the cascading hazard state.",
+              check: () => process.hazardCreatedByBypass === true
+            }
+          ]
+        }
+      ];
+
+      let currentScenarioIndex = 0;
+      let currentViewMode = "operator"; // "operator" | "technical"
+
+      /* =====================================================================
+         3. CORE 20ms DETERMINISTIC PLC SCAN-CYCLE ENGINE
+         ===================================================================== */
+      function scanCycle() {
+        process.scanCount++;
+
+        // STEP 1: READ PHYSICAL INPUTS & APPLY ANY ACTIVE PLC FORCES
+        I["I:0/0"] = fieldInputs.startPB;
+        I["I:0/1"] = fieldInputs.stopPB;
+        I["I:0/2"] = fieldInputs.estopOK;
+        I["I:0/3"] = forces.groundClamp ? true : fieldInputs.groundClamp;
+        I["I:0/4"] = forces.tankClamp ? true : fieldInputs.tankClamp;
+        I["I:0/5"] = forces.liftDown ? true : fieldInputs.liftDown;
+        I["I:0/6"] = forces.lshhOK ? true : fieldInputs.lshhOK;
+        I["I:0/7"] = fieldInputs.vfdFault;
+
+        const prevMixerRun = O["O:0/0"];
+        const prevValveOpen = O["O:0/1"];
+
+        // STEP 2: EVALUATE LADDER LOGIC RUNGS TOP-TO-BOTTOM
+
+        // Rung 0000: Master Safety Permissive Chain (Series XIC contacts)
+        const rung0Power =
+          I["I:0/2"] && // E-Stop Armed
+          I["I:0/3"] && // Static Ground GS-401
+          I["I:0/4"] && // Tank Lock Clamp ZS-402
+          I["I:0/5"] && // Mixer Lift Down ZS-403
+          I["I:0/6"];   // LSHH-404 High-High Level OK
+        B3["B3:0/0"] = rung0Power;
+
+        // Rung 0001: Post-Mixer Motor Seal-In Circuit
+        const startBranch = I["I:0/0"] || prevMixerRun;
+        const rung1Power =
+          startBranch &&
+          I["I:0/1"] &&   // Stop PB (NC)
+          B3["B3:0/0"] && // Master Safety Permissive
+          !I["I:0/7"];    // XIO VFD Fault
+        O["O:0/0"] = rung1Power;
+
+        // Rung 0002: Automated Solvent Feed Valve XV-401 Interlock
+        const rung2Power =
+          B3["B3:0/1"] && // Operator Feed Request
+          I["I:0/2"] &&   // E-Stop Armed
+          I["I:0/3"] &&   // Static Ground Bonded
+          I["I:0/6"];     // LSHH-404 Level OK
+        O["O:0/1"] = rung2Power;
+
+        // Rung 0003: Batch Dispersion TON Timer (T4:0)
+        if (O["O:0/0"]) {
+          T4.EN = true;
+          T4.ACC = Math.min(T4.PRE, T4.ACC + SCAN_MS);
+          T4.DN = T4.ACC >= T4.PRE;
+        } else {
+          T4.EN = false;
+          T4.ACC = 0;
+          T4.DN = false;
+        }
+
+        // Track Scenario Milestone Events
+        if (O["O:0/0"]) {
+          process.everStarted = true;
+        }
+        if (prevMixerRun && !O["O:0/0"] && !I["I:0/3"]) {
+          process.trippedByGroundDuringRun = true;
+        }
+        if (O["O:0/0"] && !fieldInputs.groundClamp && forces.groundClamp) {
+          process.hazardCreatedByBypass = true;
+        }
+
+        // STEP 3: UPDATE CONTINUOUS PROCESS PHYSICS (LEVEL & RPM)
+        if (O["O:0/1"]) {
+          // Solvent filling at ~3.2% per second
+          process.tankLevel = Math.min(100, process.tankLevel + 3.2 * (SCAN_MS / 1000));
+          document.getElementById("tankLevelSlider").value = Math.round(process.tankLevel);
+        }
+
+        // Evaluate physical LSHH-404 float switch at 80% threshold
+        const physicalLshhNormal = process.tankLevel < 80;
+        if (fieldInputs.lshhOK && !physicalLshhNormal) {
+          fieldInputs.lshhOK = false;
+          if (prevValveOpen || prevMixerRun) {
+            process.trippedByLshhDuringFeed = true;
+          }
+        } else if (!fieldInputs.lshhOK && process.tankLevel < 78) {
+          // 2% deadband hysteresis on level switch reset
+          fieldInputs.lshhOK = true;
+        }
+
+        // Mixer RPM inertia simulation
+        if (O["O:0/0"]) {
+          process.rpm = Math.min(1450, process.rpm + 45);
+        } else {
+          process.rpm = Math.max(0, process.rpm - 28);
+        }
+
+        if (process.rpm > 0) {
+          process.bladeAngle = (process.bladeAngle + (process.rpm / 1450) * 0.65) % (Math.PI * 2);
+        }
+
+        // STEP 4: RENDER UI UPDATES
+        renderFrame();
+      }
+
+      /* =====================================================================
+         4. UI INITIALIZATION & DYNAMIC FIELD DECK BUILDER
+         ===================================================================== */
+      const DEVICE_DEFS = [
+        {
+          key: "startPB",
+          tag: "PB-402A",
+          addr: "I:0/0",
+          name: "Start Batch PB",
+          type: "momentary-start"
+        },
+        {
+          key: "stopPB",
+          tag: "PB-402B",
+          addr: "I:0/1",
+          name: "Stop Batch PB",
+          type: "momentary-stop"
+        },
+        {
+          key: "estopOK",
+          tag: "HS-402",
+          addr: "I:0/2",
+          name: "E-Stop Mushroom",
+          type: "toggle",
+          okLabel: "ARMED",
+          badLabel: "TRIPPED",
+          bypassable: false
+        },
+        {
+          key: "groundClamp",
+          tag: "GS-401",
+          addr: "I:0/3",
+          name: "Static Ground Clamp",
+          type: "toggle",
+          okLabel: "BONDED",
+          badLabel: "UNBONDED",
+          bypassable: true
+        },
+        {
+          key: "tankClamp",
+          tag: "ZS-402",
+          addr: "I:0/4",
+          name: "Tank Lock Clamp",
+          type: "toggle",
+          okLabel: "LOCKED",
+          badLabel: "OPEN",
+          bypassable: true
+        },
+        {
+          key: "liftDown",
+          tag: "ZS-403",
+          addr: "I:0/5",
+          name: "Mixer Lift Position",
+          type: "toggle",
+          okLabel: "DOWN (IN TANK)",
+          badLabel: "RAISED",
+          bypassable: true
+        },
+        {
+          key: "lshhOK",
+          tag: "LSHH-404",
+          addr: "I:0/6",
+          name: "High-High Level Sw",
+          type: "toggle",
+          okLabel: "NORMAL (<80%)",
+          badLabel: "HIGH TRIP",
+          bypassable: true
+        },
+        {
+          key: "vfdFault",
+          tag: "MA-405",
+          addr: "I:0/7",
+          name: "VFD Overload Fault",
+          type: "fault-toggle",
+          okLabel: "VFD OK",
+          badLabel: "OVERLOAD TRIP",
+          bypassable: false
+        }
+      ];
+
+      function buildFieldDeck() {
+        const deck = document.getElementById("fieldDeck");
+        deck.innerHTML = "";
+
+        DEVICE_DEFS.forEach((dev) => {
+          const card = document.createElement("div");
+          card.className = "device-card safe";
+          card.id = `card_${dev.key}`;
+
+          const top = document.createElement("div");
+          top.className = "device-top";
+          top.innerHTML = `<span class="device-tag">${dev.tag}</span><span class="device-addr">${dev.addr}</span>`;
+
+          const title = document.createElement("div");
+          title.className = "device-name";
+          title.textContent = dev.name;
+
+          const actions = document.createElement("div");
+          actions.className = "device-actions";
+
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.id = `btn_${dev.key}`;
+          btn.className = "ctrl-btn";
+
+          if (dev.type === "momentary-start") {
+            btn.classList.add("btn-start");
+            btn.textContent = "HOLD START";
+            bindMomentary(btn, () => { fieldInputs.startPB = true; }, () => { fieldInputs.startPB = false; });
+          } else if (dev.type === "momentary-stop") {
+            btn.classList.add("btn-stop");
+            btn.textContent = "PRESS STOP";
+            bindMomentary(btn, () => { fieldInputs.stopPB = false; }, () => { fieldInputs.stopPB = true; });
+          } else if (dev.type === "toggle") {
+            btn.addEventListener("click", () => {
+              fieldInputs[dev.key] = !fieldInputs[dev.key];
+              if (dev.key === "lshhOK" && fieldInputs.lshhOK && process.tankLevel >= 80) {
+                process.tankLevel = 72;
+                document.getElementById("tankLevelSlider").value = 72;
+              }
+            });
+          } else if (dev.type === "fault-toggle") {
+            btn.addEventListener("click", () => {
+              fieldInputs.vfdFault = !fieldInputs.vfdFault;
+            });
+          }
+
+          actions.appendChild(btn);
+
+          if (dev.bypassable) {
+            const bBtn = document.createElement("button");
+            bBtn.type = "button";
+            bBtn.id = `force_${dev.key}`;
+            bBtn.className = "bypass-btn";
+            bBtn.textContent = "FORCE";
+            bBtn.title = "Simulate PLC Bit Force / Jumper";
+            bBtn.addEventListener("click", () => {
+              forces[dev.key] = !forces[dev.key];
+            });
+            actions.appendChild(bBtn);
+          }
+
+          card.appendChild(top);
+          card.appendChild(title);
+          card.appendChild(actions);
+          deck.appendChild(card);
+        });
+      }
+
+      function bindMomentary(el, onDown, onUp) {
+        el.addEventListener("mousedown", (e) => { e.preventDefault(); onDown(); el.classList.add("pressed"); });
+        el.addEventListener("mouseup", () => { onUp(); el.classList.remove("pressed"); });
+        el.addEventListener("mouseleave", () => { onUp(); el.classList.remove("pressed"); });
+        el.addEventListener("touchstart", (e) => { e.preventDefault(); onDown(); el.classList.add("pressed"); }, { passive: false });
+        el.addEventListener("touchend", () => { onUp(); el.classList.remove("pressed"); });
+      }
+
+      /* =====================================================================
+         5. LADDER LOGIC SVG SYMBOL GENERATOR
+         ===================================================================== */
+      function drawContact(groupId, x, y, addr, label, isXIO) {
+        const g = document.getElementById(groupId);
+        if (!g) return;
+        g.innerHTML = `
+          <text x="${x + 22}" y="${y - 14}" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="9" font-weight="bold">${addr}</text>
+          <line id="${groupId}_barL" x1="${x + 15}" y1="${y - 9}" x2="${x + 15}" y2="${y + 9}" stroke="#64748b" stroke-width="2.5" />
+          <line id="${groupId}_barR" x1="${x + 29}" y1="${y - 9}" x2="${x + 29}" y2="${y + 9}" stroke="#64748b" stroke-width="2.5" />
+          ${isXIO ? `<line id="${groupId}_slash" x1="${x + 12}" y1="${y + 9}" x2="${x + 32}" y2="${y - 9}" stroke="#64748b" stroke-width="2" />` : ""}
+          <text x="${x + 22}" y="${y + 21}" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="8.5">${label}</text>
+        `;
+      }
+
+      function drawCoil(groupId, x, y, addr, label) {
+        const g = document.getElementById(groupId);
+        if (!g) return;
+        g.innerHTML = `
+          <text x="${x + 16}" y="${y - 14}" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="9" font-weight="bold">${addr}</text>
+          <path id="${groupId}_arcL" d="M ${x + 8} ${y - 10} A 12 12 0 0 0 ${x + 8} ${y + 10}" fill="none" stroke="#64748b" stroke-width="2.5" />
+          <path id="${groupId}_arcR" d="M ${x + 24} ${y - 10} A 12 12 0 0 1 ${x + 24} ${y + 10}" fill="none" stroke="#64748b" stroke-width="2.5" />
+          <text x="${x + 16}" y="${y + 21}" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="8.5">${label}</text>
+        `;
+      }
+
+      function initLadderSymbols() {
+        // Rung 0
+        drawContact("ld_estop", 48, 34, "I:0/2", "ESTOP_OK", false);
+        drawContact("ld_ground", 148, 34, "I:0/3", "GS_401", false);
+        drawContact("ld_clamp", 248, 34, "I:0/4", "ZS_402", false);
+        drawContact("ld_lift", 348, 34, "I:0/5", "ZS_403", false);
+        drawContact("ld_lshh", 448, 34, "I:0/6", "LSHH_404", false);
+        drawCoil("ld_perm_coil", 545, 34, "B3:0/0", "PERM_OK");
+
+        // Rung 1
+        drawContact("ld_start", 58, 28, "I:0/0", "START_PB", false);
+        drawContact("ld_seal", 58, 72, "O:0/0", "M402_RUN", false);
+        drawContact("ld_stop", 178, 28, "I:0/1", "STOP_PB", false);
+        drawContact("ld_perm_in1", 298, 28, "B3:0/0", "PERM_OK", false);
+        drawContact("ld_fault", 418, 28, "I:0/7", "VFD_FLT", true);
+        drawCoil("ld_motor_coil", 545, 28, "O:0/0", "M402_MTR");
+
+        // Rung 2
+        drawContact("ld_feed_req", 78, 34, "B3:0/1", "FEED_REQ", false);
+        drawContact("ld_feed_gnd", 228, 34, "I:0/3", "GS_401", false);
+        drawContact("ld_feed_lshh", 378, 34, "I:0/6", "LSHH_404", false);
+        drawCoil("ld_valve_coil", 545, 34, "O:0/1", "XV_401");
+
+        // Rung 3
+        drawContact("ld_tmr_en", 118, 36, "O:0/0", "M402_RUN", false);
+      }
+
+      function styleInstruction(groupId, energized, forced = false) {
+        const color = forced ? "#f59e0b" : energized ? "#10b981" : "#475569";
+        ["barL", "barR", "slash", "arcL", "arcR"].forEach((part) => {
+          const el = document.getElementById(`${groupId}_${part}`);
+          if (el) el.setAttribute("stroke", color);
+        });
+      }
+
+      function styleWire(id, energized) {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute("stroke", energized ? "#10b981" : "#334155");
+      }
+
+      /* =====================================================================
+         6. RENDER LOOP (UPDATES P&ID, CARDS, SCENARIO CHECKS, & LADDER)
+         ===================================================================== */
+      function anyBypassActive() {
+        return Object.values(forces).some(Boolean);
+      }
+
+      function getActiveHazards() {
+        const hazards = [];
+        if (O["O:0/0"] && !fieldInputs.groundClamp) {
+          hazards.push("UNBONDED SOLVENT AGITATION (GS-401 BYPASSED) — STATIC IGNITION RISK!");
+        }
+        if (O["O:0/0"] && !fieldInputs.tankClamp) {
+          hazards.push("UNCLAMPED CHANGE-CAN WHILE MIXING (ZS-402 BYPASSED) — MECHANICAL VESSEL SPIN RISK!");
+        }
+        if (O["O:0/0"] && !fieldInputs.liftDown) {
+          hazards.push("EXPOSED ROTATING BLADE ABOVE TANK (ZS-403 BYPASSED) — SEVERE MECHANICAL & SPLASH HAZARD!");
+        }
+        if ((O["O:0/1"] || O["O:0/0"]) && process.tankLevel >= 80) {
+          hazards.push("TANK OVERFILL ABOVE 80% (LSHH-404 BYPASSED) — FLAMMABLE SOLVENT SPILL HAZARD!");
+        }
+        return hazards;
+      }
+
+      function renderFrame() {
+        // 1. Telemetry & Hazard Banner
+        const activeHazards = getActiveHazards();
+        const telemetryBadge = document.getElementById("telemetryBadge");
+        const scanLed = document.getElementById("scanLed");
+        const faultCount = (fieldInputs.vfdFault ? 1 : 0) + (!fieldInputs.estopOK ? 1 : 0) + activeHazards.length;
+
+        scanLed.style.opacity = process.scanCount % 12 < 6 ? "1" : "0.35";
+        document.getElementById("telemetryText").textContent =
+          `RUN | ${SCAN_MS}ms Scan | Faults: ${faultCount}`;
+        telemetryBadge.classList.toggle("alarm", faultCount > 0);
+
+        const hazardBanner = document.getElementById("hazardBanner");
+        if (activeHazards.length > 0) {
+          hazardBanner.classList.add("visible");
+          document.getElementById("hazardBannerText").textContent = `⚠️ CASCADE HAZARD: ${activeHazards[0]}`;
+        } else if (anyBypassActive()) {
+          hazardBanner.classList.add("visible");
+          document.getElementById("hazardBannerText").textContent =
+            "⚠️ PLC BIT FORCE ACTIVE — SAFETY PERMISSIVE BYPASSED WITHOUT MOC!";
+        } else {
+          hazardBanner.classList.remove("visible");
+        }
+
+        // 2. P&ID SVG Visuals
+        // Lift height (0 = down in tank, -92 = raised out of tank)
+        const liftY = fieldInputs.liftDown ? 0 : -92;
+        document.getElementById("mixerHeadGroup").setAttribute("transform", `translate(0, ${liftY})`);
+
+        // Motor housing glow
+        const motorHousing = document.getElementById("motorHousing");
+        if (fieldInputs.vfdFault) {
+          motorHousing.setAttribute("stroke", "#ef4444");
+          motorHousing.setAttribute("fill", "#450a0a");
+        } else if (O["O:0/0"]) {
+          motorHousing.setAttribute("stroke", "#10b981");
+          motorHousing.setAttribute("fill", "#064e3b");
+        } else {
+          motorHousing.setAttribute("stroke", "#64748b");
+          motorHousing.setAttribute("fill", "#1e293b");
+        }
+
+        // Cowles blade rotation simulation
+        const scaleX = Math.max(0.22, Math.abs(Math.cos(process.bladeAngle)));
+        document.getElementById("cowlesBladeGroup").setAttribute("transform", `translate(300, 304) scale(${scaleX}, 1)`);
+
+        // Vortex inside tank (only visible when blade is submerged and spinning)
+        const vortexVisible = process.rpm > 180 && fieldInputs.liftDown && process.tankLevel > 15;
+        document.getElementById("vortexGroup").setAttribute("opacity", vortexVisible ? "0.9" : "0");
+        if (vortexVisible) {
+          const waveShift = Math.sin(process.bladeAngle * 2) * 5;
+          document.getElementById("vortexWave1").setAttribute("transform", `translate(${waveShift}, 0)`);
+        }
+
+        // Tank liquid level height (Tank interior is 172px tall, max fill 168px)
+        const maxLiquidH = 168;
+        const liquidH = Math.max(2, (process.tankLevel / 100) * maxLiquidH);
+        const liquidY = 170 - liquidH;
+        const liquidRect = document.getElementById("tankLiquidRect");
+        liquidRect.setAttribute("y", liquidY);
+        liquidRect.setAttribute("height", liquidH);
+
+        // LSHH-404 probe tip color
+        document.getElementById("lshhProbeTip").setAttribute("fill", fieldInputs.lshhOK ? "#10b981" : "#ef4444");
+
+        // Solvent Valve XV-401 & Flow Animation
+        const xvAct = document.getElementById("xv401Actuator");
+        const xvTxt = document.getElementById("xv401StateTxt");
+        const pipeFlow = document.getElementById("solventPipeFlow");
+        const stream = document.getElementById("solventStream");
+
+        if (O["O:0/1"]) {
+          xvAct.setAttribute("fill", "#065f46");
+          xvAct.setAttribute("stroke", "#10b981");
+          xvTxt.textContent = "OPEN";
+          xvTxt.setAttribute("fill", "#34d399");
+          pipeFlow.setAttribute("opacity", "1");
+          pipeFlow.setAttribute("stroke-dashoffset", -(process.scanCount * 2) % 36);
+          stream.setAttribute("opacity", "0.9");
+          stream.setAttribute("stroke-dashoffset", -(process.scanCount * 3) % 28);
+          stream.setAttribute("y2", 165 + liquidY);
+        } else {
+          xvAct.setAttribute("fill", "#1e293b");
+          xvAct.setAttribute("stroke", "#94a3b8");
+          xvTxt.textContent = "CLOSED";
+          xvTxt.setAttribute("fill", "#94a3b8");
+          pipeFlow.setAttribute("opacity", "0");
+          stream.setAttribute("opacity", "0");
+        }
+
+        // Ground clamp GS-401 & Tank Clamp ZS-402 visuals
+        const gndColor = fieldInputs.groundClamp ? "#10b981" : "#ef4444";
+        document.getElementById("groundWirePath").setAttribute("stroke", gndColor);
+        document.getElementById("groundClampJaw").setAttribute("fill", gndColor);
+        document.getElementById("groundClampJaw").setAttribute(
+          "transform",
+          fieldInputs.groundClamp ? "translate(0,0)" : "translate(14, -8) rotate(22)"
+        );
+
+        const clampRect = document.getElementById("clampArmRect");
+        clampRect.setAttribute("fill", fieldInputs.tankClamp ? "#10b981" : "#ef4444");
+        clampRect.setAttribute("width", fieldInputs.tankClamp ? "53" : "22");
+
+        document.getElementById("zs403Led").setAttribute("fill", fieldInputs.liftDown ? "#10b981" : "#ef4444");
+
+        // Local Control Panel Pilots & E-Stop
+        document.getElementById("svgPilotRun").setAttribute("fill", O["O:0/0"] ? "#10b981" : "#064e3b");
+        document.getElementById("svgPilotReady").setAttribute("fill", B3["B3:0/0"] ? "#10b981" : "#064e3b");
+
+        const estopCap = document.getElementById("estopCap");
+        const estopTxt = document.getElementById("estopStatusTxt");
+        if (fieldInputs.estopOK) {
+          estopCap.setAttribute("fill", "#dc2626");
+          estopTxt.textContent = "ARMED";
+        } else {
+          estopCap.setAttribute("fill", "#7f1d1d");
+          estopTxt.textContent = "TRIPPED";
+        }
+
+        // 3. Field Deck Cards & Buttons
+        DEVICE_DEFS.forEach((dev) => {
+          const card = document.getElementById(`card_${dev.key}`);
+          const btn = document.getElementById(`btn_${dev.key}`);
+          const fBtn = document.getElementById(`force_${dev.key}`);
+
+          if (dev.type === "toggle") {
+            const isOk = fieldInputs[dev.key];
+            const isForced = forces[dev.key];
+            card.className = `device-card ${isForced ? "bypassed" : isOk ? "safe" : "trip"}`;
+            btn.className = `ctrl-btn ${isOk ? "state-ok" : "state-bad"}`;
+            btn.textContent = isOk ? dev.okLabel : dev.badLabel;
+            if (fBtn) fBtn.classList.toggle("active", isForced);
+          } else if (dev.type === "fault-toggle") {
+            const isFault = fieldInputs.vfdFault;
+            card.className = `device-card ${isFault ? "trip" : "safe"}`;
+            btn.className = `ctrl-btn ${isFault ? "state-bad" : "state-ok"}`;
+            btn.textContent = isFault ? dev.badLabel : dev.okLabel;
+          }
+        });
+
+        // Tank Level Label & Feed Button
+        document.getElementById("tankLevelLabel").textContent = `${Math.round(process.tankLevel)}%`;
+        const feedBtn = document.getElementById("btnToggleFeed");
+        feedBtn.textContent = B3["B3:0/1"] ? "Solvent Feed: REQUESTED" : "Solvent Feed: CLOSED";
+        feedBtn.className = `ctrl-btn ${O["O:0/1"] ? "state-ok" : B3["B3:0/1"] ? "state-bad" : ""}`;
+
+        // 4. Cause & Effect Status Bar
+        updateCauseAndEffectBar(activeHazards);
+
+        // 5. Right Panel Mode A (Operator) vs Mode B (Technical Ladder)
+        if (currentViewMode === "operator") {
+          document.getElementById("metricRpm").textContent = `${Math.round(process.rpm)} RPM`;
+          document.getElementById("metricTimer").textContent = `${(T4.ACC / 1000).toFixed(1)} / 15.0s`;
+          const sisEl = document.getElementById("metricSisState");
+          if (activeHazards.length > 0) {
+            sisEl.textContent = "BYPASSED";
+            sisEl.style.color = "var(--status-warn)";
+          } else if (!B3["B3:0/0"] || fieldInputs.vfdFault) {
+            sisEl.textContent = "TRIPPED";
+            sisEl.style.color = "var(--status-trip)";
+          } else {
+            sisEl.textContent = "HEALTHY";
+            sisEl.style.color = "var(--status-safe)";
+          }
+          evaluateCurrentScenarioChecklist();
+        } else {
+          renderLadderAndIOTable();
+        }
+      }
+
+      function updateCauseAndEffectBar(activeHazards) {
+        const bar = document.getElementById("causeEffectBar");
+        const headline = document.getElementById("ceHeadline");
+        const permsWrap = document.getElementById("cePermissives");
+
+        const trips = [];
+        if (!I["I:0/2"]) trips.push("E-Stop Depressed (HS-402)");
+        if (!I["I:0/3"]) trips.push("Static Ground Clamp Open (GS-401)");
+        if (!I["I:0/4"]) trips.push("Tank Lock Clamp Disengaged (ZS-402)");
+        if (!I["I:0/5"]) trips.push("Mixer Lift Not Lowered (ZS-403)");
+        if (!I["I:0/6"]) trips.push("High-High Level Trip >= 80% (LSHH-404)");
+        if (I["I:0/7"]) trips.push("VFD Motor Overload Fault (MA-405)");
+
+        if (activeHazards.length > 0) {
+          bar.className = "cause-effect-bar warn";
+          headline.textContent = `⚠️ WARNING: ${activeHazards[0]}`;
+        } else if (trips.length > 0) {
+          bar.className = "cause-effect-bar trip";
+          headline.textContent = `INTERLOCK TRIPPED: ${trips[0]} — Output Drives De-energized`;
+        } else if (O["O:0/0"]) {
+          bar.className = "cause-effect-bar";
+          headline.textContent = "RUNNING: All Safety Permissives Verified — Mixer Motor M-402 Sealed In";
+        } else {
+          bar.className = "cause-effect-bar";
+          headline.textContent = "READY: All Safety Permissives Satisfied — Press START to Energize Mixer";
+        }
+
+        const permDefs = [
+          { label: "E-STOP (I:0/2)", ok: I["I:0/2"], forced: false },
+          { label: "GROUND GS-401 (I:0/3)", ok: I["I:0/3"], forced: forces.groundClamp },
+          { label: "CLAMP ZS-402 (I:0/4)", ok: I["I:0/4"], forced: forces.tankClamp },
+          { label: "LIFT ZS-403 (I:0/5)", ok: I["I:0/5"], forced: forces.liftDown },
+          { label: "LSHH-404 (I:0/6)", ok: I["I:0/6"], forced: forces.lshhOK },
+          { label: "VFD OK (I:0/7)", ok: !I["I:0/7"], forced: false }
+        ];
+
+        permsWrap.innerHTML = permDefs
+          .map((p) => {
+            const cls = p.forced ? "bypass" : p.ok ? "ok" : "bad";
+            const suffix = p.forced ? " [FORCED]" : p.ok ? " [OK]" : " [OPEN]";
+            return `<span class="perm-chip ${cls}">${p.label}${suffix}</span>`;
+          })
+          .join("");
+      }
+
+      function renderLadderAndIOTable() {
+        // Rung 0 power flow
+        const p0_1 = I["I:0/2"];
+        const p0_2 = p0_1 && I["I:0/3"];
+        const p0_3 = p0_2 && I["I:0/4"];
+        const p0_4 = p0_3 && I["I:0/5"];
+        const p0_5 = p0_4 && I["I:0/6"];
+
+        styleInstruction("ld_estop", I["I:0/2"]);
+        styleInstruction("ld_ground", I["I:0/3"], forces.groundClamp);
+        styleInstruction("ld_clamp", I["I:0/4"], forces.tankClamp);
+        styleInstruction("ld_lift", I["I:0/5"], forces.liftDown);
+        styleInstruction("ld_lshh", I["I:0/6"], forces.lshhOK);
+        styleInstruction("ld_perm_coil", B3["B3:0/0"]);
+
+        styleWire("r0_w1", p0_1);
+        styleWire("r0_w2", p0_2);
+        styleWire("r0_w3", p0_3);
+        styleWire("r0_w4", p0_4);
+        styleWire("r0_w5", p0_5);
+        styleWire("r0_w6", p0_5);
+        document.getElementById("rung0Status").textContent = B3["B3:0/0"] ? "TRUE (1)" : "FALSE (0)";
+        document.getElementById("rung0Status").style.color = B3["B3:0/0"] ? "#10b981" : "#ef4444";
+
+        // Rung 1 power flow
+        const p1_start = I["I:0/0"] || O["O:0/0"];
+        const p1_stop = p1_start && I["I:0/1"];
+        const p1_perm = p1_stop && B3["B3:0/0"];
+        const p1_out = p1_perm && !I["I:0/7"];
+
+        styleInstruction("ld_start", I["I:0/0"]);
+        styleInstruction("ld_seal", O["O:0/0"]);
+        styleInstruction("ld_stop", I["I:0/1"]);
+        styleInstruction("ld_perm_in1", B3["B3:0/0"]);
+        styleInstruction("ld_fault", !I["I:0/7"]);
+        styleInstruction("ld_motor_coil", O["O:0/0"]);
+
+        styleWire("r1_branch", O["O:0/0"]);
+        styleWire("r1_w1", p1_start);
+        styleWire("r1_w2", p1_stop);
+        styleWire("r1_w3", p1_perm);
+        styleWire("r1_w4", p1_out);
+        styleWire("r1_w5", p1_out);
+        document.getElementById("rung1Status").textContent = O["O:0/0"] ? "ENERGIZED (1)" : "DE-ENERGIZED (0)";
+        document.getElementById("rung1Status").style.color = O["O:0/0"] ? "#10b981" : "#94a3b8";
+
+        // Rung 2 power flow
+        const p2_1 = B3["B3:0/1"];
+        const p2_2 = p2_1 && I["I:0/3"];
+        const p2_3 = p2_2 && I["I:0/6"] && I["I:0/2"];
+
+        styleInstruction("ld_feed_req", B3["B3:0/1"]);
+        styleInstruction("ld_feed_gnd", I["I:0/3"], forces.groundClamp);
+        styleInstruction("ld_feed_lshh", I["I:0/6"], forces.lshhOK);
+        styleInstruction("ld_valve_coil", O["O:0/1"]);
+
+        styleWire("r2_w1", p2_1);
+        styleWire("r2_w2", p2_2);
+        styleWire("r2_w3", p2_3);
+        styleWire("r2_w4", p2_3);
+        document.getElementById("rung2Status").textContent = O["O:0/1"] ? "OPEN (1)" : "CLOSED (0)";
+        document.getElementById("rung2Status").style.color = O["O:0/1"] ? "#10b981" : "#94a3b8";
+
+        // Rung 3 TON Timer
+        styleInstruction("ld_tmr_en", O["O:0/0"]);
+        styleWire("r3_w1", O["O:0/0"]);
+        styleWire("r3_w2", T4.DN);
+        document.getElementById("tonBox").setAttribute("stroke", O["O:0/0"] ? "#10b981" : "#475569");
+        document.getElementById("tonAccText").textContent = `PRE: ${T4.PRE}  ACC: ${T4.ACC}`;
+        document.getElementById("rung3Status").textContent = `ACC: ${T4.ACC}ms | DN: ${T4.DN ? 1 : 0}`;
+
+        // Live I/O Tag Table
+        const rows = [
+          { addr: "I:0/0", sym: "PB_402A_START", desc: "Start Batch Pushbutton (NO)", val: I["I:0/0"], force: false },
+          { addr: "I:0/1", sym: "PB_402B_STOP", desc: "Stop Batch Pushbutton (NC)", val: I["I:0/1"], force: false },
+          { addr: "I:0/2", sym: "HS_402_ESTOP", desc: "Local E-Stop Mushroom (NC)", val: I["I:0/2"], force: false },
+          { addr: "I:0/3", sym: "GS_401_GROUND", desc: "Static Ground Bond Switch", val: I["I:0/3"], force: forces.groundClamp },
+          { addr: "I:0/4", sym: "ZS_402_CLAMP", desc: "Change-Can Tank Lock Switch", val: I["I:0/4"], force: forces.tankClamp },
+          { addr: "I:0/5", sym: "ZS_403_LIFT_DN", desc: "Post-Mixer Lowered Limit Sw", val: I["I:0/5"], force: forces.liftDown },
+          { addr: "I:0/6", sym: "LSHH_404_OK", desc: "High-High Tank Level Switch", val: I["I:0/6"], force: forces.lshhOK },
+          { addr: "I:0/7", sym: "MA_405_VFD_FLT", desc: "Agitator VFD Overload Fault", val: I["I:0/7"], force: false },
+          { addr: "B3:0/0", sym: "SIS_PERM_OK", desc: "Master Safety Permissive Bit", val: B3["B3:0/0"], force: false },
+          { addr: "O:0/0", sym: "M_402_MOTOR", desc: "Post-Mixer Motor Contactor", val: O["O:0/0"], force: false },
+          { addr: "O:0/1", sym: "XV_401_SOLVENT", desc: "Solvent Header Feed Valve", val: O["O:0/1"], force: false },
+          { addr: "T4:0.ACC", sym: "MIX_TIMER_ACC", desc: "Dispersion Cycle Timer (ms)", val: `${T4.ACC} ms`, isInt: true }
+        ];
+
+        document.getElementById("ioTableBody").innerHTML = rows
+          .map((r) => {
+            const valHtml = r.isInt
+              ? `<span class="bit-pill bit-1">${r.val}</span>`
+              : `<span class="bit-pill ${r.val ? "bit-1" : "bit-0"}">${r.val ? "1 (TRUE)" : "0 (FALSE)"}</span>${
+                  r.force ? `<span class="bit-pill bit-force">FORCED</span>` : ""
+                }`;
+            return `<tr>
+              <td style="color: var(--accent-blue); font-weight: 700;">${r.addr}</td>
+              <td>${r.sym}</td>
+              <td style="color: var(--text-secondary);">${r.desc}</td>
+              <td>${valHtml}</td>
+            </tr>`;
+          })
+          .join("");
+      }
+
+      /* =====================================================================
+         7. SCENARIO CONTROLLER & EVENT BINDINGS
+         ===================================================================== */
+      function resetAllToSafeDefaults() {
+        fieldInputs.startPB = false;
+        fieldInputs.stopPB = true;
+        fieldInputs.estopOK = true;
+        fieldInputs.groundClamp = true;
+        fieldInputs.tankClamp = true;
+        fieldInputs.liftDown = true;
+        fieldInputs.lshhOK = true;
+        fieldInputs.vfdFault = false;
+
+        forces.groundClamp = false;
+        forces.tankClamp = false;
+        forces.liftDown = false;
+        forces.lshhOK = false;
+
+        B3["B3:0/1"] = false;
+        O["O:0/0"] = false;
+        O["O:0/1"] = false;
+        T4.ACC = 0;
+
+        process.tankLevel = 45.0;
+        process.rpm = 0;
+        process.everStarted = false;
+        process.trippedByGroundDuringRun = false;
+        process.trippedByLshhDuringFeed = false;
+        process.hazardCreatedByBypass = false;
+
+        document.getElementById("tankLevelSlider").value = 45;
+      }
+
+      function loadScenario(index) {
+        currentScenarioIndex = index;
+        const scen = SCENARIOS[index];
+        scen.init();
+
+        document.getElementById("scenarioSelect").value = String(index);
+        document.getElementById("scenBadge").textContent = scen.badge;
+        document.getElementById("scenTitle").textContent = scen.title;
+        document.getElementById("scenDesc").textContent = scen.description;
+        document.getElementById("scenTakeaway").textContent = scen.takeaway;
+
+        const list = document.getElementById("scenChecklist");
+        list.innerHTML = scen.steps
+          .map(
+            (step, idx) => `
+            <li class="check-item" id="step_${idx}">
+              <div class="check-box" id="stepBox_${idx}">✓</div>
+              <div>${step.text}</div>
+            </li>`
+          )
+          .join("");
+
+        document.getElementById("scenCompleteBanner").classList.remove("visible");
+      }
+
+      function evaluateCurrentScenarioChecklist() {
+        const scen = SCENARIOS[currentScenarioIndex];
+        let allDone = true;
+
+        scen.steps.forEach((step, idx) => {
+          const passed = Boolean(step.check());
+          const itemEl = document.getElementById(`step_${idx}`);
+          if (itemEl) {
+            itemEl.classList.toggle("done", passed);
+          }
+          if (!passed) allDone = false;
+        });
+
+        document.getElementById("scenCompleteBanner").classList.toggle("visible", allDone);
+      }
+
+      function bindEvents() {
+        // Populate Scenario Dropdown
+        const select = document.getElementById("scenarioSelect");
+        SCENARIOS.forEach((s, idx) => {
+          const opt = document.createElement("option");
+          opt.value = String(idx);
+          opt.textContent = `${idx + 1}. ${s.title}`;
+          select.appendChild(opt);
+        });
+
+        select.addEventListener("change", (e) => {
+          loadScenario(Number(e.target.value));
+        });
+
+        // Mode Switch Buttons
+        const btnOp = document.getElementById("btnModeOperator");
+        const btnTech = document.getElementById("btnModeTechnical");
+
+        btnOp.addEventListener("click", () => {
+          currentViewMode = "operator";
+          btnOp.classList.add("active");
+          btnTech.classList.remove("active");
+          document.getElementById("viewModeOperator").classList.remove("hidden");
+          document.getElementById("viewModeTechnical").classList.add("hidden");
+          document.getElementById("rightPanelTitle").textContent = "Operator & PHA Walkthrough";
+          document.getElementById("rightPanelSubtitle").textContent = "MODE A — PROCESS SAFETY";
+        });
+
+        btnTech.addEventListener("click", () => {
+          currentViewMode = "technical";
+          btnTech.classList.add("active");
+          btnOp.classList.remove("active");
+          document.getElementById("viewModeTechnical").classList.remove("hidden");
+          document.getElementById("viewModeOperator").classList.add("hidden");
+          document.getElementById("rightPanelTitle").textContent = "Live PLC Ladder Logic & I/O Monitor";
+          document.getElementById("rightPanelSubtitle").textContent = "MODE B — IEC 61131-3 SCAN";
+        });
+
+        // Tank Level Slider & Solvent Feed Controls
+        document.getElementById("tankLevelSlider").addEventListener("input", (e) => {
+          process.tankLevel = Number(e.target.value);
+        });
+
+        document.getElementById("btnToggleFeed").addEventListener("click", () => {
+          B3["B3:0/1"] = !B3["B3:0/1"];
+        });
+
+        document.getElementById("btnDrainTank").addEventListener("click", () => {
+          B3["B3:0/1"] = false;
+          process.tankLevel = 35.0;
+          document.getElementById("tankLevelSlider").value = 35;
+        });
+
+        // Direct Clickable SVG P&ID Elements
+        bindMomentary(
+          document.getElementById("svgBtnStart"),
+          () => { fieldInputs.startPB = true; },
+          () => { fieldInputs.startPB = false; }
+        );
+        bindMomentary(
+          document.getElementById("svgBtnStop"),
+          () => { fieldInputs.stopPB = false; },
+          () => { fieldInputs.stopPB = true; }
+        );
+        document.getElementById("svgBtnEstop").addEventListener("click", () => {
+          fieldInputs.estopOK = !fieldInputs.estopOK;
+        });
+        document.getElementById("svgGS401").addEventListener("click", () => {
+          fieldInputs.groundClamp = !fieldInputs.groundClamp;
+        });
+        document.getElementById("svgZS402").addEventListener("click", () => {
+          fieldInputs.tankClamp = !fieldInputs.tankClamp;
+        });
+        document.getElementById("svgZS403").addEventListener("click", () => {
+          fieldInputs.liftDown = !fieldInputs.liftDown;
+        });
+        document.getElementById("svgLSHH404").addEventListener("click", () => {
+          fieldInputs.lshhOK = !fieldInputs.lshhOK;
+        });
+
+        // Reset & Scenario Navigation Buttons
+        document.getElementById("btnResetUnit").addEventListener("click", () => {
+          loadScenario(currentScenarioIndex);
+        });
+        document.getElementById("btnResetScenario").addEventListener("click", () => {
+          loadScenario(currentScenarioIndex);
+        });
+        document.getElementById("btnClearBypasses").addEventListener("click", () => {
+          Object.keys(forces).forEach((k) => { forces[k] = false; });
+        });
+        document.getElementById("btnNextScenario").addEventListener("click", () => {
+          const nextIdx = (currentScenarioIndex + 1) % SCENARIOS.length;
+          loadScenario(nextIdx);
+        });
+      }
+
+      /* =====================================================================
+         8. BOOTSTRAP APPLICATION ON WINDOW LOAD
+         ===================================================================== */
+      window.addEventListener("load", () => {
+        buildFieldDeck();
+        initLadderSymbols();
+        bindEvents();
+        loadScenario(0);
+        setInterval(scanCycle, SCAN_MS);
+      });
+    })();
+  </script>
+</body>
+</html>
